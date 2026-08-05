@@ -15,7 +15,7 @@ It never fabricates data, endpoints, product IDs, credentials, or licence terms.
 
 ## Feature map
 
-This repo implements the bounded steps defined in `../pipeline_inst.md`:
+This repo implements the bounded steps defined in `../../pipeline_inst.md`:
 
 | Step | What is delivered |
 |------|-------------------|
