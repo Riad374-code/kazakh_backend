@@ -416,6 +416,12 @@ def collect_weather(
     region = _first_region(cfg)
     variables = tuple(cfg.weather_variables)
     if not variables:
+        if dry_run:
+            _emit_or_write(
+                {"dry_run": True, "status": "blocked", "missing": ["weather_variables"]},
+                output,
+            )
+            return
         raise typer.BadParameter("weather_variables must be configured")
     request = WeatherRequest(
         (region.min_lat + region.max_lat) / 2,
@@ -458,6 +464,23 @@ def collect_ocean(
 
     cfg = load_config(config)
     if not cfg.ocean_dataset_id or not cfg.ocean_variables:
+        if dry_run:
+            _emit_or_write(
+                {
+                    "dry_run": True,
+                    "status": "blocked",
+                    "missing": [
+                        name
+                        for name, value in (
+                            ("ocean_dataset_id", cfg.ocean_dataset_id),
+                            ("ocean_variables", cfg.ocean_variables),
+                        )
+                        if not value
+                    ],
+                },
+                None,
+            )
+            return
         raise typer.BadParameter(
             "configure ocean_dataset_id and ocean_variables from `copernicusmarine describe`"
         )
