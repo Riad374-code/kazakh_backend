@@ -1,0 +1,91 @@
+{
+  "evaluation_timestamp": "2026-08-05T19:05:00+04:00",
+  "total_incidents_evaluated": 4,
+  "ranked_pollution_list": [
+    {
+      "incident_id": "SPILL_2026_001_BAKU_HARBOR",
+      "location_name": "Baku Offshore Oil Sector (Nearshore Bay)",
+      "coordinates": [
+        40.38,
+        50.05
+      ],
+      "priority_score": 78.1,
+      "urgency_classification": "CRITICAL EMERGENCY - IMMEDIATE COASTAL CONTAINMENT REQUIRED",
+      "factor_breakdown": {
+        "pollution_size_km2": 18.5,
+        "toxicity_index": 1.0,
+        "coastline_distance_m": 1200.0,
+        "population_density_sqkm": 2800.0,
+        "protected_ecosystem_zone": false,
+        "economic_loss_usd": 2500000.0,
+        "forecast_spread_km2_day": 3.8,
+        "ai_detection_confidence": 96.0
+      },
+      "priority_rank": 1
+    },
+    {
+      "incident_id": "SPILL_2026_002_SEAL_ISLANDS",
+      "location_name": "Northern Caspian (Caspian Seal Pupping Archipelago)",
+      "coordinates": [
+        45.1,
+        50.8
+      ],
+      "priority_score": 54.66,
+      "urgency_classification": "HIGH PRIORITY - DISPATCH FAST RESPONSE SKIMMERS",
+      "factor_breakdown": {
+        "pollution_size_km2": 8.0,
+        "toxicity_index": 0.85,
+        "coastline_distance_m": 4500.0,
+        "population_density_sqkm": 15.0,
+        "protected_ecosystem_zone": true,
+        "economic_loss_usd": 400000.0,
+        "forecast_spread_km2_day": 2.1,
+        "ai_detection_confidence": 91.0
+      },
+      "priority_rank": 2
+    },
+    {
+      "incident_id": "OBS_2026_004_VOLGA_SILT",
+      "location_name": "Volga River Delta (Turbid Sediment Runoff)",
+      "coordinates": [
+        46.2,
+        49.2
+      ],
+      "priority_score": 37.81,
+      "urgency_classification": "MODERATE RISK - INITIATE HOURLY SATELLITE TRACKING",
+      "factor_breakdown": {
+        "pollution_size_km2": 32.0,
+        "toxicity_index": 0.15,
+        "coastline_distance_m": 500.0,
+        "population_density_sqkm": 110.0,
+        "protected_ecosystem_zone": false,
+        "economic_loss_usd": 5000.0,
+        "forecast_spread_km2_day": 0.4,
+        "ai_detection_confidence": 82.0
+      },
+      "priority_rank": 3
+    },
+    {
+      "incident_id": "SPILL_2026_003_DEEP_CENTRAL",
+      "location_name": "Deep Central Caspian Basin (Offshore Tanker Route)",
+      "coordinates": [
+        41.8,
+        51.5
+      ],
+      "priority_score": 31.09,
+      "urgency_classification": "MODERATE RISK - INITIATE HOURLY SATELLITE TRACKING",
+      "factor_breakdown": {
+        "pollution_size_km2": 4.2,
+        "toxicity_index": 0.9,
+        "coastline_distance_m": 85000.0,
+        "population_density_sqkm": 0.0,
+        "protected_ecosystem_zone": false,
+        "economic_loss_usd": 80000.0,
+        "forecast_spread_km2_day": 1.0,
+        "ai_detection_confidence": 88.0
+      },
+      "priority_rank": 4
+    }
+  ],
+  "provenance": "KazakhAI_ML_Gemini 8-Factor Cleanup Priority Engine"
+}
