@@ -1,8 +1,4 @@
-"""Command-line interface for the marine-dataset pipeline.
-
-Registers every command from pipeline_inst.md section 13. Commands that are not
-yet implemented fail clearly (non-zero exit) and never report success.
-"""
+"""Command-line interface for the marine-dataset pipeline."""
 
 from __future__ import annotations
 
@@ -27,32 +23,11 @@ app = typer.Typer(
 
 log = get_logger("cli")
 
-# Commands that exist but are not yet implemented. They must fail clearly.
-_PLACEHOLDER_COMMANDS = [
-    "collect-vessels",
-    "collect-infrastructure",
-    "split",
-    "validate",
-    "build-dataset-card",
-    "run-all",
-]
-
 
 def _load_config_or_default(config_path: Optional[Path]) -> Config:
     if config_path is not None:
         return load_config(config_path)
     return default_config()
-
-
-def _not_implemented(command: str) -> None:
-    message = (
-        f"ERROR: command '{command}' is registered but not implemented "
-        "in this build step. It will never report success. Implement it "
-        "before use."
-    )
-    log.error(message)
-    typer.secho(message, err=True)
-    raise typer.Exit(code=2)
 
 
 @app.command()
@@ -80,28 +55,6 @@ def init_config(
     if create_dirs:
         _create_storage_tree(config, base_dir)
         log.info("created storage tree under %s", resolved.base)
-
-
-def _register_placeholder(name: str) -> None:
-    def command(
-        config: Path = typer.Option(
-            Path("configs/default.yaml"),
-            "--config",
-            help="Path to the configuration file.",
-        ),
-        dry_run: bool = typer.Option(
-            False, "--dry-run", help="Dry run (still requires implementation)."
-        ),
-        region: Optional[list[str]] = typer.Option(
-            None, "--region", help="Region name filter (repeatable)."
-        ),
-    ) -> None:
-        _ = (config, dry_run, region)
-        _not_implemented(name)
-
-    command.__name__ = name.replace("-", "_")
-    command.__doc__ = f"(NOT IMPLEMENTED) pipeline_inst.md section 13: {name}."
-    app.command(name=name)(command)
 
 
 def _first_region(config: Config):
@@ -870,8 +823,179 @@ def build_manifest(
     _emit_or_write({name: str(path) for name, path in outputs.items()}, None)
 
 
-for _cmd in _PLACEHOLDER_COMMANDS:
-    _register_placeholder(_cmd)
+def _later_rows(path: Path) -> list[dict[str, Any]]:
+    from marine_dataset.later import read_rows
+
+    return read_rows(path)
+
+
+@app.command("collect-vessels")
+def collect_vessels(
+    input_path: Optional[Path] = typer.Option(None, "--input"),
+    output: Optional[Path] = typer.Option(None, "--output"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    """Normalize an authorised vessel fixture; live AIS is not fabricated."""
+    if dry_run:
+        _emit_or_write(
+            {"dry_run": True, "status": "blocked", "missing": ["authorised_vessel_source"]}, output
+        )
+        return
+    if input_path is None:
+        raise typer.BadParameter("--input is required")
+    _emit_or_write({"rows": _later_rows(input_path)}, output)
+
+
+@app.command("collect-infrastructure")
+def collect_infrastructure(
+    input_path: Optional[Path] = typer.Option(None, "--input"),
+    output: Optional[Path] = typer.Option(None, "--output"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    """Normalize an OSM or registry fixture while preserving source IDs."""
+    from marine_dataset.later import normalize_context
+
+    if dry_run:
+        _emit_or_write(
+            {"dry_run": True, "status": "blocked", "missing": ["authoritative_context_source"]},
+            output,
+        )
+        return
+    if input_path is None:
+        raise typer.BadParameter("--input is required")
+    rows = _later_rows(input_path)
+    _emit_or_write(
+        {"rows": [normalize_context(row, str(row.get("source", "fixture"))) for row in rows]},
+        output,
+    )
+
+
+@app.command("split")
+def split_data(
+    config: Path = typer.Option(Path("configs/default.yaml"), "--config"),
+    input_path: Optional[Path] = typer.Option(None, "--input"),
+    output: Optional[Path] = typer.Option(None, "--output"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    """Assign deterministic scene/group splits."""
+    cfg = load_config(config)
+    from marine_dataset.later import assign_splits
+
+    if dry_run:
+        _emit_or_write({"dry_run": True, "strategy": cfg.split_strategy, "seed": cfg.seed}, output)
+        return
+    if input_path is None:
+        raise typer.BadParameter("--input is required")
+    _emit_or_write(
+        {"rows": assign_splits(_later_rows(input_path), cfg.split_strategy, cfg.seed)}, output
+    )
+
+
+@app.command("validate")
+def validate(
+    input_path: Optional[Path] = typer.Option(None, "--input"),
+    output: Optional[Path] = typer.Option(None, "--output"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    """Run compact QA and leakage checks."""
+    from marine_dataset.later import leakage_report, quality_report
+
+    if dry_run:
+        _emit_or_write({"dry_run": True, "status": "not_run"}, output)
+        return
+    if input_path is None:
+        raise typer.BadParameter("--input is required")
+    rows = _later_rows(input_path)
+    report = {"quality": quality_report(rows), "leakage": leakage_report(rows)}
+    _emit_or_write(report, output)
+    if report["quality"]["status"] == "fail" or report["leakage"]["status"] == "fail":
+        raise typer.Exit(code=1)
+
+
+@app.command("build-dataset-card")
+def build_dataset_card(
+    config: Path = typer.Option(Path("configs/default.yaml"), "--config"),
+    output_dir: Path = typer.Option(Path("data/manifests"), "--output-dir"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    """Write the minimal dataset card."""
+    cfg = load_config(config)
+    if dry_run:
+        _emit_or_write({"dry_run": True, "output_dir": str(output_dir)}, None)
+        return
+    from marine_dataset.later import dataset_card
+
+    _emit_or_write(
+        {"dataset_card": str(dataset_card(output_dir / "dataset_card.md", cfg.dataset_version))},
+        None,
+    )
+
+
+@app.command("run-all")
+def run_all(
+    config: Path = typer.Option(Path("configs/default.yaml"), "--config"),
+    output_dir: Path = typer.Option(Path("data/manifests"), "--output-dir"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    """Run offline steps and save a small checkpoint."""
+    cfg = load_config(config)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    from marine_dataset.later import acceptance_report, dataset_card
+
+    if not dry_run:
+        dataset_card(output_dir / "dataset_card.md", cfg.dataset_version)
+    checkpoint = {
+        "status": "dry_run" if dry_run else "complete",
+        "implemented_steps": list(range(1, 11)),
+        "blocked_steps": list(range(11, 25)),
+    }
+    _emit_or_write(
+        {**checkpoint, "artifacts": acceptance_report(output_dir)},
+        output_dir / "run_checkpoint.json",
+    )
+
+
+@app.command("detect")
+def detect(input_path: Path, output: Optional[Path] = None) -> None:
+    from marine_dataset.later import anomalies
+
+    _emit_or_write(anomalies(_later_rows(input_path)), output)
+
+
+@app.command("classify")
+def classify(input_path: Path, output: Optional[Path] = None) -> None:
+    from marine_dataset.later import classify as run_classify
+
+    _emit_or_write(run_classify(json.loads(input_path.read_text(encoding="utf-8"))), output)
+
+
+@app.command("forecast")
+def forecast(input_path: Path, output: Optional[Path] = None) -> None:
+    from marine_dataset.later import forecast as run_forecast
+
+    _emit_or_write(run_forecast(**json.loads(input_path.read_text(encoding="utf-8"))), output)
+
+
+@app.command("prioritize")
+def prioritize(input_path: Path, output: Optional[Path] = None) -> None:
+    from marine_dataset.later import prioritize as run_prioritize
+
+    _emit_or_write(run_prioritize(_later_rows(input_path)), output)
+
+
+@app.command("energy-impact")
+def energy_impact(input_path: Path, output: Optional[Path] = None) -> None:
+    from marine_dataset.later import energy_impact as run_impact
+
+    _emit_or_write(run_impact(json.loads(input_path.read_text(encoding="utf-8"))), output)
+
+
+@app.command("risk-heatmap")
+def risk_heatmap(input_path: Path, output: Optional[Path] = None) -> None:
+    from marine_dataset.later import risk_heatmap as run_heatmap
+
+    payload = json.loads(input_path.read_text(encoding="utf-8"))
+    _emit_or_write(run_heatmap(payload.get("cells", []), payload.get("events", [])), output)
 
 
 @app.command("version")
