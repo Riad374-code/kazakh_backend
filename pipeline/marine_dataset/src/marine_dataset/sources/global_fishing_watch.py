@@ -1,23 +1,16 @@
-"""Authorised-only GFW boundary; no scraping or invented data."""
+"""Global Fishing Watch adapter.
+
+Not implemented in Step 01. Registration needs: registered API token.
+Allowed fields are limited by GFW terms; do not imply raw global AIS is free.
+Built in Steps 12/14.
+"""
 
 from __future__ import annotations
 
-import os
-from typing import Any
+from marine_dataset.sources.copernicus_dataspace import NotImplementedAdapterError
 
 
-class UnavailableSource(RuntimeError):
-    pass
-
-
-def require_authorisation(env_name: str = "GFW_TOKEN") -> str:
-    token = os.getenv(env_name, "").strip()
-    if not token:
-        raise UnavailableSource(
-            "Global Fishing Watch access is unavailable: configure an authorised token"
-        )
-    return token
-
-
-def unavailable_record(reason: str) -> dict[str, Any]:
-    return {"source_name": "global_fishing_watch", "status": "unavailable", "reason": reason}
+def require_registered() -> None:
+    raise NotImplementedAdapterError(
+        "global_fishing_watch.py adapter is not implemented yet; see pipeline_inst.md for the owning step."
+    )
