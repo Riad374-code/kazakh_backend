@@ -327,6 +327,7 @@ def load_config(
     Paths remain exactly as declared in YAML; call ``PathsConfig.resolve_all``
     to materialise a resolved storage tree for directory creation.
     """
+    _load_dotenv()
     if path is None:
         path = _config_path_from_env() or _default_config_path()
     data = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
@@ -335,6 +336,21 @@ def load_config(
     if env:
         data = EnvOverrides.load(data)
     return Config.model_validate(data)
+
+
+def _load_dotenv() -> None:
+    """Load local ``.env`` values without overriding the shell environment."""
+    env_path = Path(".env")
+    if not env_path.is_file():
+        return
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        if key and key.replace("_", "").isalnum():
+            os.environ.setdefault(key, value.strip().strip('"').strip("'"))
 
 
 def _default_config_path() -> Path:

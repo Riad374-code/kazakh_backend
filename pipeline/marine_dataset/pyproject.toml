@@ -27,10 +27,6 @@ dependencies = [
 [project.scripts]
 marine-data = "marine_dataset.cli:app"
 [project.optional-dependencies]
-runtime = [
-    "python-dotenv>=1.0",
-]
-
 ocean = [
     "copernicusmarine>=2.4,<3",
 ]
