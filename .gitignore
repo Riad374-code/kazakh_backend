@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets - NEVER commit credentials
+.env
+.env.local
+
+# Tests
+.pytest_cache/
+.pytest_tmp/
+.coverage
+htmlcov/
+
+# Runtime data / generated checkpoints are intentionally committed;
+# SQLite operational store is derived and regenerated on startup.
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log

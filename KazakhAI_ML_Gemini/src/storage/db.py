@@ -484,7 +484,6 @@ def seed_from_checkpoints(db: CaspianDatabase, *, now: str = "2026-08-05T00:00:0
     # --- 2. Forecast frames (from Step 16 drift engine) ----------------------
     try:
         drift = load_checkpoint_json("lagrangian_drift_30day_forecast.json")
-        origin = drift.get("simulation_metadata", {}).get("origin_coordinates", [40.35, 50.45])
         incident_id = db.conn.execute(
             "SELECT incident_id FROM incidents ORDER BY priority_score DESC LIMIT 1"
         ).fetchone()

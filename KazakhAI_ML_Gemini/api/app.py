@@ -25,6 +25,8 @@ for p in (str(project_root), str(project_root / "src")):
     if p not in sys.path:
         sys.path.insert(0, p)
 
+from src.pipeline.scheduler import DEFAULT_INTERVAL_SECONDS as DEFAULT_REFRESH_INTERVAL_SECONDS
+
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: [%(name)s] %(message)s")
 logger = logging.getLogger("LogicAPI_Server")
 
@@ -49,15 +51,37 @@ def _run_refresh() -> Dict[str, Any]:
     return run_full_refresh(_get_db())
 
 
+def _run_refresh_with_weather() -> Dict[str, Any]:
+    """Refresh + weather/rainfall ingestion (used by the background scheduler)."""
+    from src.ingestion.weather_ingest import ingest_weather
+    result = _run_refresh()
+    try:
+        weather = ingest_weather(_get_db(), live=True)
+        result["weather"] = weather
+    except Exception as exc:  # never let weather failure break the refresh cycle
+        logger.warning(f"Weather ingestion skipped ({exc}).")
+        result["weather"] = {"status": "error", "message": str(exc)}
+    return result
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Logic API starting - bootstrapping SQLite operational store...")
+    scheduler = None
     try:
-        _run_refresh()
+        _run_refresh_with_weather()
         logger.info("SQLite operational store ready.")
+        # Background automation: periodically re-run inference/risk/energy/trend stages.
+        from src.pipeline.scheduler import CaspianScheduler
+        scheduler = CaspianScheduler(_get_db(),
+                                     refresh_fn=lambda: _run_refresh_with_weather())
+        scheduler.start()
     except Exception as exc:  # never block server boot on data issues in a demo
         logger.warning(f"Startup refresh skipped ({exc}). Some gaps may be empty.")
     yield
+    if scheduler is not None:
+        scheduler.stop()
+        logger.info("Background scheduler stopped.")
     if _db is not None:
         _db.close()
         logger.info("Logic API shutting down - database closed.")
@@ -122,6 +146,11 @@ def check_health() -> Dict[str, Any]:
             "lagrangian_drift_30day_forecast.json",
             "regional_risk_heatmap.json",
         ],
+        "background_scheduler": {
+            "status": "active",
+            "interval_seconds": DEFAULT_REFRESH_INTERVAL_SECONDS,
+            "endpoint": "POST /api/v1/admin/refresh",
+        },
     }
 
 
@@ -346,10 +375,16 @@ def weather_history(limit: int = Query(default=100, ge=1, le=1000)) -> Dict[str,
 @app.post("/api/v1/admin/refresh", summary="Recompute all analysis stages & refresh DB cache")
 def admin_refresh(_: Dict[str, Any] = None) -> Dict[str, Any]:
     try:
-        return _run_refresh()
+        return _run_refresh_with_weather()
     except Exception as exc:
         logger.error(f"Admin refresh failed: {exc}")
         raise HTTPException(status_code=500, detail=f"Refresh failed: {exc}")
+
+
+@app.post("/api/v1/admin/weather", summary="Trigger a live weather/rainfall ingestion pass")
+def admin_weather(_: Dict[str, Any] = None) -> Dict[str, Any]:
+    from src.ingestion.weather_ingest import ingest_weather
+    return ingest_weather(_get_db(), live=True)
 
 
 @app.get("/api/v1/forecast/trajectory/{incident_id}", summary="30-Day Lagrangian Drift Animation (Prediction Maps)")

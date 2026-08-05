@@ -1,8 +1,0 @@
-date_end: '2024-01-01'
-date_start: '2024-01-10'
-regions:
-- max_lat: 1
-  max_lon: 1
-  min_lat: 0
-  min_lon: 0
-  name: r

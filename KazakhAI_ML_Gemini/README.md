@@ -65,7 +65,15 @@ To start serving our prediction JSON payloads to local frontend developers:
 ```bash
 uvicorn api.app:app --host 0.0.0.0 --port 8000 --reload
 ```
-Once operational, API interactive interactive Swagger documentation is accessible directly in your web browser at: `http://localhost:8000/docs`.
+On startup the server bootstraps the SQLite operational store from the pipeline checkpoints,
+ingests live Open-Meteo weather, and launches a background scheduler
+(interval via `REFRESH_INTERVAL_SECONDS`, default 3600) that keeps detection/risk/energy/trend
+stages fresh. Iteractive Swagger documentation is available at: `http://localhost:8000/docs`.
+
+### 3. Run the background scheduler standalone
+```bash
+python -m src.pipeline.scheduler --interval-seconds 3600 --run-once
+```
 
 ---
 *Built with precision for the Caspian Sea Marine Restoration Initiative.*
