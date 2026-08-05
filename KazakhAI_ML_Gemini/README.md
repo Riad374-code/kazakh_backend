@@ -22,15 +22,33 @@ This package is strictly responsible for **Backend Mathematical Inference and Pr
 
 ## 🌐 Live Frontend API Endpoints (For UI Web Map Developers)
 
-Our FastAPI server comes pre-configured with CORS enabled on Port `8000`. Frontend developers can query the following routes to populate their interactive dashboards:
+Our FastAPI server comes pre-configured with CORS enabled on Port `8000` and is backed by a
+dependency-free **SQLite** operational store that bootstraps from the verified pipeline
+checkpoints on startup (`POST /api/v1/admin/refresh` recomputes all stages on demand).
 
 | HTTP Route | Purpose | Description |
 | :--- | :--- | :--- |
-| `GET /api/v1/health` | **Diagnostics** | Evaluates readiness state across all active neural network weights and prediction files. |
-| `GET /api/v1/incidents/index` | **Index Data (*İndeks Datalar*)** | Returns our sorted 8-factor cleanup ranking table for the UI sidebar / event dashboard. |
-| `GET /api/v1/forecast/trajectory/{id}` | **Prediction Maps (*Digər Prediction Map falan*)** | Returns step-by-step 30-day Lagrangian trajectory coordinates for Mapbox/Leaflet time-lapse animation sliders. |
-| `GET /api/v1/heatmap/grid` | **Regional Heatmap Overlays** | Returns our 400-cell spatial danger classification grid for background vulnerability map layers. |
-| `POST /api/v1/detect/segment` | **Live Inference** | Accepts incoming satellite coordinates and returns live segmented oil spill boundary polygons and AI classification probabilities. |
+| `GET /api/v1/health` | **Diagnostics** | Server status + stored model/database counts. |
+| `GET /api/v1/incidents` | **Current Pollution** | Ranked incident list (Index Data) with filters `type`, `status`, `min_priority`, `max_priority`, `limit`. |
+| `GET /api/v1/incidents/{id}` | **Incident Details** | Full detail + forecasts + risk + energy impact. |
+| `GET /api/v1/incidents/index` | **Index Data (*İndeks Datalar*)** | Legacy alias of the ranked cleanup index table. |
+| `GET /api/v1/incidents/{id}/forecast` | **Forecast** | Weekly forecast frames (day/centroid/spread/mass). |
+| `GET /api/v1/incidents/{id}/risk` | **Oil & Gas Risk** | Per-asset risk scores for one incident. |
+| `GET /api/v1/forecast/trajectory/{id}` | **Prediction Maps** | 30-day Lagrangian trajectory frames for Mapbox/Leaflet sliders. |
+| `GET /api/v1/energy-impact` | **Energy Impact** | Stage 5 savings / disruption avoided per incident. |
+| `GET /api/v1/oil-gas/risk` | **Global Risk Heatmap** | All per-asset risk scores, filter by `country` / `category`. |
+| `GET /api/v1/assets` | **Infrastructure** | Oil & gas / renewable asset catalog. |
+| `GET /api/v1/stats` | **Statistics** | Aggregate database statistics. |
+| `GET /api/v1/trends/sea-level` | **Trend** | Caspian sea-level series. |
+| `GET /api/v1/trends` | **Trend Panel** | Exposed areas + pollution + future projections. |
+| `GET /api/v1/anomalies` | **Stage 1 Masks** | Weekly SAR / water-quality anomaly masks. |
+| `GET /api/v1/timeline` | **Timeline** | Forecase milestones per incident, range-filterable. |
+| `GET /api/v1/weather` | **Weather History** | Stored weather records. |
+| `GET /api/v1/heatmap/grid` | **Heatmap Overlay** | 100-cell regional risk grid. |
+| `POST /api/v1/admin/refresh` | **Refresh** | Recompute risk/energy/trend/anomaly + refresh DB cache. |
+| `POST /api/v1/detect/segment` | **Live Inference** | Live oil-spill segmentation probe. |
+
+Interactive Swagger docs: `http://localhost:8000/docs`.
 
 ---
 
