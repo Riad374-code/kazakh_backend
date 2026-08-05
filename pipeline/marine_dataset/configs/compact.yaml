@@ -1,0 +1,25 @@
+# Small real-data run: one tiny Caspian box, one day, one scene maximum.
+dataset_version: "compact-0.1"
+seed: 42
+regions:
+  - name: compact_caspian_box
+    min_lon: 51.0
+    min_lat: 44.0
+    max_lon: 51.2
+    max_lat: 44.2
+date_start: "2024-01-01"
+date_end: "2024-01-01"
+scene_search:
+  max_results: 1
+  polarizations: ["VV"]
+weather_variables: ["wind_speed_10m", "wind_direction_10m", "precipitation"]
+weather_model: "era5"
+paths:
+  base: "data"
+  raw: "raw"
+  interim: "interim"
+  processed: "processed"
+  manifests: "manifests"
+  reports: "reports"
+  cache: "cache"
+  quarantine: "quarantine"

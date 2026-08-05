@@ -180,7 +180,11 @@ def search_sentinel1(
 
 
 def _download_cdse(
-    product_id: str, output: Path, expected_sha256: Optional[str], dry_run: bool
+    product_id: str,
+    output: Path,
+    expected_sha256: Optional[str],
+    dry_run: bool,
+    max_bytes: int,
 ) -> None:
     if dry_run:
         _emit_or_write({"dry_run": True, "product_id": product_id, "output": str(output)}, None)
@@ -188,7 +192,9 @@ def _download_cdse(
     from marine_dataset.sources.copernicus_dataspace import CDSEClient
 
     try:
-        result = CDSEClient().download_product(product_id, output, expected_sha256=expected_sha256)
+        result = CDSEClient(max_download_bytes=max_bytes).download_product(
+            product_id, output, expected_sha256=expected_sha256
+        )
     except Exception as exc:
         retry_path = Path("data/interim/retry") / f"{product_id}.json"
         _emit_or_write(
@@ -206,10 +212,11 @@ def download_sentinel1(
     product_id: str = typer.Option(..., "--product-id"),
     output: Path = typer.Option(..., "--output"),
     expected_sha256: Optional[str] = typer.Option(None, "--expected-sha256"),
+    max_bytes: int = typer.Option(10_000_000, "--max-bytes", min=1),
     dry_run: bool = typer.Option(False, "--dry-run"),
 ) -> None:
     """Download one authenticated Sentinel-1 product through CDSE OData."""
-    _download_cdse(product_id, output, expected_sha256, dry_run)
+    _download_cdse(product_id, output, expected_sha256, dry_run, max_bytes)
 
 
 @app.command("search-sentinel3")
@@ -264,10 +271,11 @@ def download_sentinel3(
     product_id: str = typer.Option(..., "--product-id"),
     output: Path = typer.Option(..., "--output"),
     expected_sha256: Optional[str] = typer.Option(None, "--expected-sha256"),
+    max_bytes: int = typer.Option(10_000_000, "--max-bytes", min=1),
     dry_run: bool = typer.Option(False, "--dry-run"),
 ) -> None:
     """Download one authenticated original Sentinel-3 product."""
-    _download_cdse(product_id, output, expected_sha256, dry_run)
+    _download_cdse(product_id, output, expected_sha256, dry_run, max_bytes)
 
 
 def _weather_raw_path(config: Config, region: Any, params: dict[str, Any]) -> Path:
