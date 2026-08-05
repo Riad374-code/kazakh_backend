@@ -1,16 +1,11 @@
-"""EMODnet collector.
-
-Not implemented in Step 01. Open data; per-dataset licences, coverage and
-update dates vary and must be preserved. Distinguish European vs global coverage.
-Built in Step 11.
-"""
+"""Provider-neutral EMODnet record boundary."""
 
 from __future__ import annotations
 
-from marine_dataset.sources.copernicus_dataspace import NotImplementedAdapterError
+from typing import Any
+
+from marine_dataset.context import normalize_context
 
 
-def require_registered() -> None:
-    raise NotImplementedAdapterError(
-        "emodnet.py adapter is not implemented yet; see pipeline_inst.md for the owning step."
-    )
+def normalize_records(records: list[dict[str, Any]]) -> tuple[dict[str, Any], ...]:
+    return tuple(normalize_context(item, source_name="emodnet") for item in records)

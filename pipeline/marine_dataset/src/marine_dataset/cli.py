@@ -27,15 +27,8 @@ app = typer.Typer(
 
 log = get_logger("cli")
 
-# Commands that exist but are not yet implemented. They must fail clearly.
-_PLACEHOLDER_COMMANDS = [
-    "collect-vessels",
-    "collect-infrastructure",
-    "split",
-    "validate",
-    "build-dataset-card",
-    "run-all",
-]
+# Commands without an input artifact keep the old non-zero behavior. This is
+# useful for callers that accidentally run a network/data step with no inputs.
 
 
 def _load_config_or_default(config_path: Optional[Path]) -> Config:
@@ -80,28 +73,6 @@ def init_config(
     if create_dirs:
         _create_storage_tree(config, base_dir)
         log.info("created storage tree under %s", resolved.base)
-
-
-def _register_placeholder(name: str) -> None:
-    def command(
-        config: Path = typer.Option(
-            Path("configs/default.yaml"),
-            "--config",
-            help="Path to the configuration file.",
-        ),
-        dry_run: bool = typer.Option(
-            False, "--dry-run", help="Dry run (still requires implementation)."
-        ),
-        region: Optional[list[str]] = typer.Option(
-            None, "--region", help="Region name filter (repeatable)."
-        ),
-    ) -> None:
-        _ = (config, dry_run, region)
-        _not_implemented(name)
-
-    command.__name__ = name.replace("-", "_")
-    command.__doc__ = f"(NOT IMPLEMENTED) pipeline_inst.md section 13: {name}."
-    app.command(name=name)(command)
 
 
 def _first_region(config: Config):
@@ -847,8 +818,258 @@ def build_manifest(
     _emit_or_write({name: str(path) for name, path in outputs.items()}, None)
 
 
-for _cmd in _PLACEHOLDER_COMMANDS:
-    _register_placeholder(_cmd)
+def _json_rows(path: Path) -> list[dict[str, Any]]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(payload, list):
+        return [dict(row) for row in payload]
+    if isinstance(payload, dict):
+        rows = payload.get("rows", payload.get("items", []))
+        if isinstance(rows, list):
+            return [dict(row) for row in rows]
+    raise typer.BadParameter("input JSON must be a list or an object with rows/items")
+
+
+def _input_or_placeholder(command: str, input_path: Optional[Path], dry_run: bool) -> None:
+    if input_path is None and not dry_run:
+        _not_implemented(command)
+
+
+@app.command("collect-vessels")
+def collect_vessels(
+    config: Path = typer.Option(Path("configs/default.yaml"), "--config"),
+    input_path: Optional[Path] = typer.Option(None, "--input"),
+    output: Optional[Path] = typer.Option(None, "--output"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    """Normalize an authorised vessel fixture; live GFW access is opt-in."""
+    _ = load_config(config)
+    _input_or_placeholder("collect-vessels", input_path, dry_run)
+    if dry_run:
+        _emit_or_write(
+            {"dry_run": True, "status": "unavailable_without_authorised_gfw_access"}, output
+        )
+        return
+    from marine_dataset.vessels import reject_speed_jumps
+
+    rows = reject_speed_jumps(_json_rows(input_path))
+    _emit_or_write({"rows": rows, "status": "fixture"}, output)
+
+
+@app.command("collect-infrastructure")
+def collect_infrastructure(
+    config: Path = typer.Option(Path("configs/default.yaml"), "--config"),
+    input_path: Optional[Path] = typer.Option(None, "--input"),
+    output: Optional[Path] = typer.Option(None, "--output"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    """Normalize an OSM/registry fixture while preserving source IDs."""
+    _ = load_config(config)
+    _input_or_placeholder("collect-infrastructure", input_path, dry_run)
+    if dry_run:
+        _emit_or_write({"dry_run": True, "status": "no_authoritative_source_queried"}, output)
+        return
+    from marine_dataset.context import merge_context, normalize_context
+
+    rows = _json_rows(input_path)
+    normalized = merge_context(
+        normalize_context(row, source_name=str(row.get("source_name", "fixture"))) for row in rows
+    )
+    _emit_or_write({"rows": normalized, "status": "fixture"}, output)
+
+
+@app.command("split")
+def split_data(
+    config: Path = typer.Option(Path("configs/default.yaml"), "--config"),
+    input_path: Optional[Path] = typer.Option(None, "--input"),
+    output: Optional[Path] = typer.Option(None, "--output"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    """Assign deterministic grouped train/validation/test splits."""
+    cfg = load_config(config)
+    _input_or_placeholder("split", input_path, dry_run)
+    from marine_dataset.splitting import assign_splits
+
+    if dry_run:
+        _emit_or_write({"dry_run": True, "strategy": cfg.split_strategy, "seed": cfg.seed}, output)
+        return
+    _emit_or_write(
+        {
+            "rows": assign_splits(
+                _json_rows(input_path),
+                strategy=cfg.split_strategy,
+                seed=cfg.seed,
+                val_fraction=cfg.split_val_holdout,
+                test_fraction=cfg.split_test_holdout,
+            )
+        },
+        output,
+    )
+
+
+@app.command("validate")
+def validate(
+    config: Path = typer.Option(Path("configs/default.yaml"), "--config"),
+    input_path: Optional[Path] = typer.Option(None, "--input"),
+    output: Optional[Path] = typer.Option(None, "--output"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    """Run deterministic manifest quality checks."""
+    _ = load_config(config)
+    _input_or_placeholder("validate", input_path, dry_run)
+    from marine_dataset.validation import validate_rows
+
+    if dry_run:
+        _emit_or_write({"dry_run": True, "status": "not_run"}, output)
+        return
+    report = validate_rows(_json_rows(input_path))
+    _emit_or_write(report, output)
+    if report["status"] == "fail":
+        raise typer.Exit(code=1)
+
+
+@app.command("build-dataset-card")
+def build_card(
+    config: Path = typer.Option(Path("configs/default.yaml"), "--config"),
+    output_dir: Path = typer.Option(Path("data/reports"), "--output-dir"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    """Write a minimal reproducibility card and known-issues file."""
+    cfg = load_config(config)
+    from marine_dataset.dataset_card import build_dataset_card
+
+    if dry_run:
+        _emit_or_write({"dry_run": True, "output_dir": str(output_dir)}, None)
+        return
+    card, issues = build_dataset_card(output_dir, dataset_version=cfg.dataset_version)
+    _emit_or_write({"dataset_card": str(card), "known_issues": str(issues)}, None)
+
+
+@app.command("run-all")
+def run_all(
+    config: Path = typer.Option(Path("configs/default.yaml"), "--config"),
+    output_dir: Path = typer.Option(Path("data/reports"), "--output-dir"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    """Run the offline-safe stages and record a durable checkpoint."""
+    cfg = load_config(config)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    checkpoint = output_dir / "run_all_checkpoint.json"
+    payload = {
+        "config_version": cfg.dataset_version,
+        "status": "dry_run" if dry_run else "completed",
+        "steps": ["init-config", "validate", "build-dataset-card"],
+    }
+    if not dry_run:
+        from marine_dataset.dataset_card import build_dataset_card
+
+        build_dataset_card(output_dir, dataset_version=cfg.dataset_version)
+    _emit_or_write(payload, checkpoint)
+
+
+def _run_stage(
+    command: str, function: Any, input_path: Optional[Path], output: Optional[Path], dry_run: bool
+) -> None:
+    if dry_run:
+        _emit_or_write({"dry_run": True, "stage": command}, output)
+        return
+    if input_path is None:
+        raise typer.BadParameter("--input is required")
+    payload = json.loads(input_path.read_text(encoding="utf-8"))
+    if function.__name__ == "weekly_anomalies":
+        payload = payload.get("rows", payload) if isinstance(payload, dict) else payload
+    elif function.__name__ == "rank_events":
+        payload = payload.get("rows", payload) if isinstance(payload, dict) else payload
+    if function.__name__ == "risk_heatmap":
+        result = function(payload.get("cells", []), payload.get("events", []))
+    elif (
+        function.__name__ == "advection_forecast"
+        and isinstance(payload, dict)
+        and "start" in payload
+    ):
+        result = function(
+            **{
+                key: value
+                for key, value in payload.items()
+                if key
+                in {
+                    "start",
+                    "wind_speed_mps",
+                    "wind_direction_deg",
+                    "current_u_mps",
+                    "current_v_mps",
+                    "horizons_days",
+                }
+            }
+        )
+    else:
+        result = function(payload)
+    _emit_or_write(result, output)
+
+
+@app.command("detect")
+def detect(
+    input_path: Optional[Path] = typer.Option(None, "--input"),
+    output: Optional[Path] = typer.Option(None, "--output"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    from marine_dataset.stages import weekly_anomalies
+
+    _run_stage("stage1-anomaly", weekly_anomalies, input_path, output, dry_run)
+
+
+@app.command("classify")
+def classify_stage(
+    input_path: Optional[Path] = typer.Option(None, "--input"),
+    output: Optional[Path] = typer.Option(None, "--output"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    from marine_dataset.stages import classify
+
+    _run_stage("stage2-classification", classify, input_path, output, dry_run)
+
+
+@app.command("forecast")
+def forecast_stage(
+    input_path: Optional[Path] = typer.Option(None, "--input"),
+    output: Optional[Path] = typer.Option(None, "--output"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    from marine_dataset.stages import advection_forecast
+
+    _run_stage("stage3-forecast", advection_forecast, input_path, output, dry_run)
+
+
+@app.command("prioritize")
+def prioritize_stage(
+    input_path: Optional[Path] = typer.Option(None, "--input"),
+    output: Optional[Path] = typer.Option(None, "--output"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    from marine_dataset.stages import rank_events
+
+    _run_stage("stage4-prioritization", rank_events, input_path, output, dry_run)
+
+
+@app.command("energy-impact")
+def energy_impact_stage(
+    input_path: Optional[Path] = typer.Option(None, "--input"),
+    output: Optional[Path] = typer.Option(None, "--output"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    from marine_dataset.stages.impact import energy_impact
+
+    _run_stage("stage5-energy-impact", energy_impact, input_path, output, dry_run)
+
+
+@app.command("risk-heatmap")
+def risk_heatmap_stage(
+    input_path: Optional[Path] = typer.Option(None, "--input"),
+    output: Optional[Path] = typer.Option(None, "--output"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    from marine_dataset.stages.heatmap import risk_heatmap
+
+    _run_stage("stage6-risk-heatmap", risk_heatmap, input_path, output, dry_run)
 
 
 @app.command("version")

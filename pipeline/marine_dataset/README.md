@@ -4,10 +4,8 @@ A reproducible Python 3.11+ pipeline for collecting, processing, aligning,
 documenting and exporting a multimodal marine-pollution dataset. It never
 fabricates data, endpoints, product IDs, credentials, licence terms or results.
 
-Status: Steps 01-10 are implemented. The package includes current CDSE STAC/OData
-acquisition, explicit-model weather collection, an official Copernicus Marine
-Toolbox boundary, SAR derived processing, labels/masks/weak labels, alignment,
-tiling, manifests/ML contracts and native-grid Sentinel-3 extraction.
+Status: Steps 01-24 are implemented as offline-safe building blocks. External
+provider access and authoritative coefficients remain explicit opt-in inputs.
 
 ## Feature map
 
@@ -25,6 +23,10 @@ The bounded requirements are defined in `../../pipeline_inst.md`.
 | 08 | Weather/ocean/vessel matching, geospatial tiles and deterministic stratified negatives |
 | 09 | Relational manifests, deterministic sample index, ML export contract and checksums |
 | 10 | Sentinel-3 metadata, quality-bit masks, native-grid extraction and co-registration |
+| 11-12 | Context/infrastructure normalization, OSM query boundary and vessel matching |
+| 13-14 | Deterministic grouped splits, leakage report and reliability/QA scoring |
+| 15-20 | Deterministic anomaly, classification, advection, prioritization, impact and heatmap baselines |
+| 21-24 | Dashboard envelopes, CLI orchestration, dataset card, known issues and reproducibility checksum |
 
 ## Install
 
@@ -57,9 +59,9 @@ validated tables and the channel-ordered `ml_export_contract`. Run
 `marine-data <command> --help` for real preprocess, align, tile and Sentinel-3
 input/output options.
 
-Commands through Step 10 are implemented. Later vessel/infrastructure, split,
-validation, dataset-card and run-all commands remain explicit non-zero
-placeholders.
+The remaining commands are offline-safe when given fixture JSON. Live vessel and
+infrastructure collection still requires authorised provider access; missing
+credentials are reported as unavailable and never replaced with invented data.
 
 ## Scientific boundaries
 
