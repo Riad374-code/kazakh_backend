@@ -1,7 +1,6 @@
 """Command-line interface for the marine-dataset pipeline.
 
-Registers every command from pipeline_inst.md section 13. Commands that are not
-yet implemented fail clearly (non-zero exit) and never report success.
+Registers commands from pipeline_inst.md section 13. Implemented commands execute real data acquisition and processing logic. Remaining placeholders fail clearly (non-zero exit) and never report success.
 """
 
 from __future__ import annotations
@@ -24,8 +23,8 @@ app = typer.Typer(
 log = get_logger("cli")
 
 # Commands that exist but are not yet implemented. They must fail clearly.
+# Note: 'search-sentinel1' is now actively implemented in Step 04!
 _PLACEHOLDER_COMMANDS = [
-    "search-sentinel1",
     "download-sentinel1",
     "search-sentinel3",
     "download-sentinel3",
@@ -131,6 +130,45 @@ def init_config(
         for sub in ("scenes", "tiles", "masks", "environmental_grids"):
             (resolved.processed / sub).mkdir(parents=True, exist_ok=True)
         log.info("created storage tree under %s", resolved.base)
+
+
+@app.command("search-sentinel1")
+def search_sentinel1_command(
+    config: Path = typer.Option(
+        Path("configs/default.yaml"),
+        "--config",
+        help="Path to the configuration file.",
+    ),
+    start_date: str = typer.Option(
+        "2026-08-01", "--start-date", help="Start acquisition date (YYYY-MM-DD)."
+    ),
+    end_date: str = typer.Option(
+        "2026-08-05", "--end-date", help="End acquisition date (YYYY-MM-DD)."
+    ),
+    max_results: int = typer.Option(10, "--max-results", help="Maximum scenes to query."),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Dry run search without saving manifests."
+    ),
+    region: Optional[list[str]] = typer.Option(
+        None, "--region", help="Region name filter (repeatable)."
+    ),
+) -> None:
+    """Search Copernicus Data Space Ecosystem for Sentinel-1 SAR GRD imagery."""
+    from marine_dataset.sources.sentinel1 import save_scene_manifest, search_sentinel1_scenes
+
+    try:
+        scenes = search_sentinel1_scenes(start_date=start_date, end_date=end_date, max_results=max_results)
+        if not dry_run and scenes:
+            out_path = save_scene_manifest(scenes)
+            typer.echo(f"Successfully cataloged {len(scenes)} Sentinel-1 scenes and saved manifest to {out_path}")
+        elif scenes:
+            typer.echo(f"[dry-run] Discovered {len(scenes)} Sentinel-1 SAR scenes.")
+        else:
+            typer.echo("No Sentinel-1 scenes matched query filters.")
+    except Exception as exc:
+        log.error("search-sentinel1 execution failed: %s", exc)
+        typer.secho(f"ERROR: search-sentinel1 failed: {exc}", err=True)
+        raise typer.Exit(code=1)
 
 
 def _register_placeholder(name: str) -> None:

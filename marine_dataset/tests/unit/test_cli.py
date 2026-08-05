@@ -103,7 +103,7 @@ def test_init_config_refuses_to_overwrite_source(tmp_path):
 
 def test_placeholder_command_fails_clearly(tmp_path):
     cfg = _copy_shipped_config(tmp_path)
-    result = runner.invoke(app, ["search-sentinel1", "--config", str(cfg)])
+    result = runner.invoke(app, ["download-sentinel1", "--config", str(cfg)])
     assert result.exit_code == 2
     stderr = result.stderr
     as_bytes = stderr if isinstance(stderr, bytes) else (stderr or "").encode()
