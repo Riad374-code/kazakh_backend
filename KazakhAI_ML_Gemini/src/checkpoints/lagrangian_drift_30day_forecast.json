@@ -1,0 +1,324 @@
+{
+  "simulation_metadata": {
+    "origin_coordinates": [
+      40.35,
+      50.45
+    ],
+    "total_duration_days": 30,
+    "particle_count": 500,
+    "horizontal_diffusivity_m2s": 10.0,
+    "provenance": "KazakhAI_ML_Gemini Lagrangian Hydrodynamic Engine"
+  },
+  "trajectory_frames": [
+    {
+      "step": 0,
+      "day": 0.0,
+      "active_particles": 500,
+      "beached_particles": 0,
+      "remaining_floating_oil_tons": 250.0,
+      "centroid_lat": 40.34974,
+      "centroid_lon": 50.45011,
+      "dispersion_radius_km": 1.52
+    },
+    {
+      "step": 8,
+      "day": 1.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 235.44,
+      "centroid_lat": 40.36657,
+      "centroid_lon": 50.562,
+      "dispersion_radius_km": 2.37
+    },
+    {
+      "step": 16,
+      "day": 2.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 221.73,
+      "centroid_lat": 40.37433,
+      "centroid_lon": 50.70786,
+      "dispersion_radius_km": 3.0
+    },
+    {
+      "step": 24,
+      "day": 3.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 208.82,
+      "centroid_lat": 40.37471,
+      "centroid_lon": 50.85591,
+      "dispersion_radius_km": 3.42
+    },
+    {
+      "step": 32,
+      "day": 4.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 196.66,
+      "centroid_lat": 40.37174,
+      "centroid_lon": 50.97235,
+      "dispersion_radius_km": 3.87
+    },
+    {
+      "step": 40,
+      "day": 5.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 185.2,
+      "centroid_lat": 40.36588,
+      "centroid_lon": 51.04835,
+      "dispersion_radius_km": 4.36
+    },
+    {
+      "step": 48,
+      "day": 6.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 174.42,
+      "centroid_lat": 40.3604,
+      "centroid_lon": 51.09585,
+      "dispersion_radius_km": 4.66
+    },
+    {
+      "step": 56,
+      "day": 7.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 164.26,
+      "centroid_lat": 40.35644,
+      "centroid_lon": 51.14863,
+      "dispersion_radius_km": 5.04
+    },
+    {
+      "step": 64,
+      "day": 8.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.35531,
+      "centroid_lon": 51.23313,
+      "dispersion_radius_km": 5.35
+    },
+    {
+      "step": 72,
+      "day": 9.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.3585,
+      "centroid_lon": 51.35506,
+      "dispersion_radius_km": 5.5
+    },
+    {
+      "step": 80,
+      "day": 10.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.36191,
+      "centroid_lon": 51.49561,
+      "dispersion_radius_km": 5.84
+    },
+    {
+      "step": 88,
+      "day": 11.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.35667,
+      "centroid_lon": 51.62111,
+      "dispersion_radius_km": 6.09
+    },
+    {
+      "step": 96,
+      "day": 12.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.33685,
+      "centroid_lon": 51.70815,
+      "dispersion_radius_km": 6.41
+    },
+    {
+      "step": 104,
+      "day": 13.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.30269,
+      "centroid_lon": 51.74955,
+      "dispersion_radius_km": 6.56
+    },
+    {
+      "step": 112,
+      "day": 14.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.2643,
+      "centroid_lon": 51.76257,
+      "dispersion_radius_km": 6.69
+    },
+    {
+      "step": 120,
+      "day": 15.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.23544,
+      "centroid_lon": 51.77474,
+      "dispersion_radius_km": 6.75
+    },
+    {
+      "step": 128,
+      "day": 16.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.22898,
+      "centroid_lon": 51.80366,
+      "dispersion_radius_km": 6.94
+    },
+    {
+      "step": 136,
+      "day": 17.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.24707,
+      "centroid_lon": 51.85356,
+      "dispersion_radius_km": 7.15
+    },
+    {
+      "step": 144,
+      "day": 18.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.27935,
+      "centroid_lon": 51.90647,
+      "dispersion_radius_km": 7.33
+    },
+    {
+      "step": 152,
+      "day": 19.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.307,
+      "centroid_lon": 51.94347,
+      "dispersion_radius_km": 7.38
+    },
+    {
+      "step": 160,
+      "day": 20.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.31499,
+      "centroid_lon": 51.94956,
+      "dispersion_radius_km": 7.46
+    },
+    {
+      "step": 168,
+      "day": 21.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.3022,
+      "centroid_lon": 51.9242,
+      "dispersion_radius_km": 7.86
+    },
+    {
+      "step": 176,
+      "day": 22.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.28464,
+      "centroid_lon": 51.88148,
+      "dispersion_radius_km": 8.04
+    },
+    {
+      "step": 184,
+      "day": 23.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.28483,
+      "centroid_lon": 51.83179,
+      "dispersion_radius_km": 8.31
+    },
+    {
+      "step": 192,
+      "day": 24.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.32178,
+      "centroid_lon": 51.78532,
+      "dispersion_radius_km": 8.44
+    },
+    {
+      "step": 200,
+      "day": 25.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.39362,
+      "centroid_lon": 51.74117,
+      "dispersion_radius_km": 8.78
+    },
+    {
+      "step": 208,
+      "day": 26.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.4848,
+      "centroid_lon": 51.69296,
+      "dispersion_radius_km": 9.12
+    },
+    {
+      "step": 216,
+      "day": 27.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.56982,
+      "centroid_lon": 51.63904,
+      "dispersion_radius_km": 9.42
+    },
+    {
+      "step": 224,
+      "day": 28.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.63169,
+      "centroid_lon": 51.58115,
+      "dispersion_radius_km": 9.61
+    },
+    {
+      "step": 232,
+      "day": 29.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.67139,
+      "centroid_lon": 51.51848,
+      "dispersion_radius_km": 9.72
+    },
+    {
+      "step": 240,
+      "day": 30.0,
+      "active_floating_particles": 500,
+      "beached_shoreline_particles": 0,
+      "remaining_floating_oil_tons": 155.0,
+      "centroid_lat": 40.70882,
+      "centroid_lon": 51.45429,
+      "dispersion_radius_km": 10.03
+    }
+  ]
+}
