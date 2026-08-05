@@ -1,0 +1,111 @@
+# marine-dataset default configuration.
+#
+# WARNING: Values below are SAFE PLACEHOLDERS. The region and date range are
+# deliberately small and MUST be replaced with the user's real study area.
+# Do not treat the sample bounds as a real target region.
+#
+# No credentials, API keys, or real product IDs appear in this file. Secrets are
+# read from environment variables / .env only (see .env.example).
+
+dataset_version: "0.1.0"
+seed: 42
+
+# --- Geographic regions (section 15) -----------------------------------------
+# Replace these bounds with the intended study area before running collection.
+regions:
+  - name: "example_placeholder_region"
+    min_lon: 50.0
+    min_lat: 43.0
+    max_lon: 54.0
+    max_lat: 46.0
+    country: []
+
+# --- Date range ---------------------------------------------------------------
+# A short placeholder window so no real data is pulled by accident.
+date_start: "2024-01-01"
+date_end: "2024-01-02"
+
+# --- Sentinel-1 scene search --------------------------------------------------
+scene_search:
+  product_type: "GRD"
+  polarizations: ["VV"]
+  orbit_directions: ["ASCENDING", "DESCENDING"]
+  relative_orbits: null
+  platform: null
+  max_results: 10
+
+# --- Tiling --------------------------------------------------------------------
+tile:
+  size_px: 256
+  overlap_px: 0
+  target_crs: "EPSG:4326"
+  target_resolution_m: null
+  min_valid_water_percent: 0.0
+  min_positive_mask_percent: null
+
+# --- Variables (select after choosing regions) ---------------------------------
+weather_variables: []
+ocean_variables: []
+
+# --- Label ontology ------------------------------------------------------------
+ontology_path: "configs/label_ontology.yaml"
+
+# --- Observation type preference -----------------------------------------------
+# reanalysis|observation are preferred for training; forecasts are flagged.
+observations: ["reanalysis", "observation"]
+
+# --- Negative sampling and splits ----------------------------------------------
+negative_sampling_ratio: 1.0
+split_strategy: "group_by_scene"
+split_test_holdout: 0.2
+split_val_holdout: 0.2
+
+# --- Resampling ----------------------------------------------------------------
+resampling_method: "bilinear"
+mask_resampling_method: "nearest"
+
+# --- Network / concurrency -----------------------------------------------------
+rate_limit:
+  requests_per_minute: 30
+  max_concurrent_requests: 4
+retry:
+  max_attempts: 3
+  base_delay_seconds: 2.0
+  max_delay_seconds: 120.0
+  backoff_factor: 2.0
+  http_timeout_seconds: 30.0
+
+# --- Paths ---------------------------------------------------------------------
+# `base` is the data root; the other entries are relative to it unless absolute.
+paths:
+  base: "data"
+  raw: "raw"
+  interim: "interim"
+  processed: "processed"
+  manifests: "manifests"
+  reports: "reports"
+  cache: "cache"
+  quarantine: "quarantine"
+
+# --- Compression ---------------------------------------------------------------
+compression:
+  gdal_profile: "GeoTIFF"
+  compression: "DEFLATE"
+  z_level: 6
+
+# --- Quality thresholds ---------------------------------------------------------
+quality:
+  weather_delta_minutes: 90
+  ocean_delta_minutes: 90
+  max_warnings: 20
+  min_coverage_fraction: 0.5
+
+# --- Licence gate behaviour ----------------------------------------------------
+# "warn" quarantines incompatible/unresolved sources and continues;
+# "fail" aborts the build.
+licence_on_incompatible: "warn"
+
+# --- Logging --------------------------------------------------------------------
+logging:
+  level: "INFO"
+  log_dir: "logs"
