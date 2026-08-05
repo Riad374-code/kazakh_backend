@@ -1,0 +1,55 @@
+{
+  "status": "complete",
+  "implemented_steps": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "blocked_steps": [
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24
+  ],
+  "artifacts": {
+    "status": "pass",
+    "files": [
+      "checksums.sha256",
+      "dataset_card.md",
+      "dataset_manifest.parquet",
+      "environment.parquet",
+      "infrastructure.parquet",
+      "known_issues.md",
+      "label_ontology.yaml",
+      "labels.parquet",
+      "licence_report.md",
+      "ml_export_contract.json",
+      "quality_report.json",
+      "run_checkpoint.json",
+      "sample_index.parquet",
+      "scenes.parquet",
+      "source_registry.yaml",
+      "split_manifest.parquet",
+      "tiles.parquet",
+      "vessels.parquet"
+    ],
+    "bytes": 59369
+  }
+}

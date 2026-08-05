@@ -1,0 +1,11 @@
+dataset_version: 0.1.0
+seed: 42
+regions:
+- name: test_region
+  min_lon: 50.0
+  min_lat: 43.0
+  max_lon: 54.0
+  max_lat: 46.0
+  country: []
+date_start: '2024-01-01'
+date_end: '2024-01-02'

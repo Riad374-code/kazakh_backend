@@ -1,0 +1,19 @@
+version: "1.0"
+classes:
+  - {id: 0, name: background_water, definition: Valid water without an assigned foreground label.}
+  - {id: 1, name: confirmed_mineral_oil_spill, definition: Mineral oil confirmed by a reliable authority or expert evidence.}
+  - {id: 2, name: probable_mineral_oil_spill, definition: Oil-like observation with supporting evidence but no confirmation.}
+  - {id: 3, name: look_alike, definition: Dark SAR feature judged more likely to be a non-oil look-alike.}
+  - {id: 4, name: natural_biogenic_slick, definition: Natural film or biogenic surface slick.}
+  - {id: 5, name: algal_bloom_or_ocean_front, definition: "Algal bloom, front, or related optical/oceanographic feature."}
+  - {id: 6, name: low_wind_area, definition: Low-wind surface roughness anomaly.}
+  - {id: 7, name: vessel, definition: Vessel body or explicitly annotated vessel target.}
+  - {id: 8, name: land, definition: Land pixel excluded from water analysis.}
+  - {id: 9, name: cloud_or_invalid_optical_pixel, definition: Cloudy or invalid optical observation.}
+  - {id: 10, name: unknown_or_unreviewed, definition: Observation not yet reviewed or too uncertain to classify.}
+confidence:
+  verified: Confirmed by a reliable authority or multiple expert sources.
+  high: Expert annotation supported by contextual evidence.
+  medium: Probable interpretation not fully confirmed.
+  low: Weak label or automatic candidate.
+  unknown: Insufficient provenance.

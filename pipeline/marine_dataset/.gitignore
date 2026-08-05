@@ -1,0 +1,28 @@
+# secrets
+#.env
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# caches and generated data
+data/cache/
+data/reports/
+data/manifests/
+data/quarantine/
+logs/
+.pytest_cache/
+.pytest_tmp/
+.ruff_cache/
+.coverage
+
+# generated reports/artifacts (keep source_registry.yaml which is committed)
+data/reports/licence_report.md
+data/manifests/
+*.parquet

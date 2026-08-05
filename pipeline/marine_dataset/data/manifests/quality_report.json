@@ -1,0 +1,19 @@
+{
+  "manifest_contract_validation": {
+    "checks": 5,
+    "status": "passed"
+  },
+  "reason": "Full Step 14 quality validation is unavailable.",
+  "row_counts": {
+    "dataset_manifest": 0,
+    "environment": 0,
+    "infrastructure": 0,
+    "labels": 0,
+    "sample_index": 0,
+    "scenes": 0,
+    "split_manifest": 0,
+    "tiles": 0,
+    "vessels": 0
+  },
+  "status": "not_run"
+}

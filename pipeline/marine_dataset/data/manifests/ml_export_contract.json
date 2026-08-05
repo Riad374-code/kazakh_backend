@@ -1,0 +1,42 @@
+{
+  "channel_axis_order": "CHW",
+  "channels": [],
+  "dtype": "float32",
+  "feature_availability": {
+    "optional_features": [],
+    "representation": "per_sample_boolean_map",
+    "required_features": []
+  },
+  "nodata": {
+    "representation": "mask",
+    "value": null
+  },
+  "normalization": {
+    "fit_scope": "training_split_only",
+    "method": null,
+    "parameters": {},
+    "status": "not_run"
+  },
+  "schema_version": "1.0",
+  "split": {
+    "allowed_values": [
+      "train",
+      "val",
+      "test"
+    ],
+    "source": "split_manifest.parquet",
+    "status": "not_run"
+  },
+  "status": "not_configured",
+  "target": {
+    "field": "class_id",
+    "source": "labels.parquet",
+    "status": "not_configured"
+  },
+  "units": {},
+  "weights": {
+    "field": null,
+    "source": null,
+    "status": "not_configured"
+  }
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "scene_id": "S1C_IW_GRDH_1SDV_20260804T145206_20260804T145220_008847_0118CD_13F0.SAFE",
+    "uuid": "ec6d2ed2-4530-4069-8345-81b3575139cc",
+    "acquisition_start": "2026-08-04T14:52:06.930214Z",
+    "acquisition_end": "2026-08-04T14:52:20.707536Z",
+    "content_length_mb": 894.32,
+    "download_url": "https://catalogue.dataspace.copernicus.eu/odata/v1/Products('ec6d2ed2-4530-4069-8345-81b3575139cc')/$value",
+    "geometry": "geography'SRID=4326;POLYGON ((44.869808 37.622875, 45.076122 36.795109, 47.875443 37.190792, 47.700264 38.017799, 44.869808 37.622875))'",
+    "provenance": "Copernicus Data Space Ecosystem (CDSE) - Sentinel-1 SAR GRD"
+  },
+  {
+    "scene_id": "S1D_IW_GRDH_1SDV_20260804T030008_20260804T030033_003970_00734E_34FA.SAFE",
+    "uuid": "726ca136-6473-41ae-8d00-057e637f3cb1",
+    "acquisition_start": "2026-08-04T03:00:08.016108Z",
+    "acquisition_end": "2026-08-04T03:00:33.013818Z",
+    "content_length_mb": 1643.38,
+    "download_url": "https://catalogue.dataspace.copernicus.eu/odata/v1/Products('726ca136-6473-41ae-8d00-057e637f3cb1')/$value",
+    "geometry": "geography'SRID=4326;POLYGON ((47.292812 38.902603, 47.697308 40.400688, 44.711578 40.798565, 44.371876 39.300968, 47.292812 38.902603))'",
+    "provenance": "Copernicus Data Space Ecosystem (CDSE) - Sentinel-1 SAR GRD"
+  },
+  {
+    "scene_id": "S1D_IW_GRDH_1SDV_20260804T025943_20260804T030008_003970_00734E_958C.SAFE",
+    "uuid": "d30f42b8-61b6-42ed-b115-744f81ca6d2a",
+    "acquisition_start": "2026-08-04T02:59:43.015410Z",
+    "acquisition_end": "2026-08-04T03:00:08.014617Z",
+    "content_length_mb": 1644.15,
+    "download_url": "https://catalogue.dataspace.copernicus.eu/odata/v1/Products('d30f42b8-61b6-42ed-b115-744f81ca6d2a')/$value",
+    "geometry": "geography'SRID=4326;POLYGON ((47.697327 40.40078, 48.051388 41.906765, 44.995804 42.302814, 44.710423 40.798794, 47.697327 40.40078))'",
+    "provenance": "Copernicus Data Space Ecosystem (CDSE) - Sentinel-1 SAR GRD"
+  }
+]
