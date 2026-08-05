@@ -29,9 +29,7 @@ def setup_logging(level: str = "INFO", log_dir: Path | None = None) -> logging.L
     logger.setLevel(numeric_level)
     logger.propagate = False
 
-    formatter = logging.Formatter(
-        "%(asctime)s %(levelname)s %(name)s %(message)s"
-    )
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s")
 
     console = logging.StreamHandler(sys.stdout)
     console.setFormatter(formatter)
@@ -41,9 +39,7 @@ def setup_logging(level: str = "INFO", log_dir: Path | None = None) -> logging.L
         log_dir = Path(log_dir)
         log_dir.mkdir(parents=True, exist_ok=True)
         try:
-            file_handler = logging.FileHandler(
-                log_dir / "marine_dataset.log", encoding="utf-8"
-            )
+            file_handler = logging.FileHandler(log_dir / "marine_dataset.log", encoding="utf-8")
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
         except OSError as exc:  # pragma: no cover - environment dependent

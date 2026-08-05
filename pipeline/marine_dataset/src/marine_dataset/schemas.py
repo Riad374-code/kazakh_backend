@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -67,9 +67,7 @@ class SceneTime(BaseModel):
     def _times_consistent(self) -> "SceneTime":
         if self.acquisition_end < self.acquisition_start:
             raise ValueError("acquisition_end must be >= acquisition_start")
-        computed = self.acquisition_start + (
-            self.acquisition_end - self.acquisition_start
-        ) / 2
+        computed = self.acquisition_start + (self.acquisition_end - self.acquisition_start) / 2
         if self.midpoint != computed:
             raise ValueError(
                 f"midpoint must equal (start+end)/2 in UTC; got {self.midpoint}, expected {computed}"
@@ -108,8 +106,11 @@ class SceneSourceRef(BaseModel):
     instrument_mode: Optional[str] = None
     processing_level: Optional[str] = None
     processing_baseline: Optional[str] = None
+    absolute_orbit: Optional[int] = Field(default=None, ge=0)
     relative_orbit: Optional[int] = Field(default=None, ge=0)
+    pass_direction: Optional[PassDirection] = None
     polarizations: list[str] = Field(default_factory=list)
+    incidence_angle_available: bool = False
     footprint_wkt: Optional[str] = None
     source_url: Optional[str] = None
 
@@ -193,7 +194,7 @@ class Label(BaseModel):
     source_url_or_identifier: str = Field(min_length=1)
     annotation_method: AnnotationMethod
     annotator_type: Optional[str] = None
-    annotation_timestamp: datetime
+    annotation_timestamp: Optional[datetime] = None
     label_confidence: Confidence
     verification_status: VerificationStatus = VerificationStatus.unverified
     number_of_reviewers: int = Field(default=0, ge=0)
@@ -245,7 +246,11 @@ class Tile(BaseModel):
 
     @model_validator(mode="after")
     def _percents_consistent(self) -> "Tile":
-        summed = [p for p in (self.water_percent, self.land_percent, self.invalid_pixel_percent) if p is not None]
+        summed = [
+            p
+            for p in (self.water_percent, self.land_percent, self.invalid_pixel_percent)
+            if p is not None
+        ]
         if sum(summed) > 100.0 + 1e-9:
             raise ValueError("water+land+invalid percent must not exceed 100")
         return self
@@ -428,7 +433,7 @@ class ProcessingManifest(BaseModel):
     @model_validator(mode="after")
     def _resolve_failure(self) -> "ProcessingManifest":
         if any(op.failure_status for op in self.operations):
-            self.overall_failure_status = True
+            return self.model_copy(update={"overall_failure_status": True})
         return self
 
 

@@ -1,1 +1,1 @@
-﻿"""Package submodule. Implementation lands in its owning prompt step."""
+"""Package submodule. Implementation lands in its owning prompt step."""

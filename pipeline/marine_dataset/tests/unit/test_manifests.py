@@ -55,8 +55,6 @@ def test_manifest_write_json(tmp_path):
 
 
 def test_manifest_serialization_roundtrip():
-    m = build_processing_manifest(
-        stage="align", dataset_version="0.1", input_artifact_id="scene:1"
-    )
+    m = build_processing_manifest(stage="align", dataset_version="0.1", input_artifact_id="scene:1")
     text = serialize_manifest(m)
     assert '"stage": "align"' in text

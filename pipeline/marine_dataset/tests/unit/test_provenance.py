@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import yaml
 import pytest
 
 from marine_dataset.provenance import (

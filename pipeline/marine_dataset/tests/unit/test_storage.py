@@ -58,11 +58,13 @@ def _exploding_source():
     class S:
         def read(self, n=-1):
             raise IOError("boom")
+
     from contextlib import contextmanager
 
     @contextmanager
     def cm():
         yield S()
+
     return cm()
 
 

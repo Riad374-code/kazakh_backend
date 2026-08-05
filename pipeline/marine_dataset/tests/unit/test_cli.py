@@ -103,7 +103,7 @@ def test_init_config_refuses_to_overwrite_source(tmp_path):
 
 def test_placeholder_command_fails_clearly(tmp_path):
     cfg = _copy_shipped_config(tmp_path)
-    result = runner.invoke(app, ["search-sentinel1", "--config", str(cfg)])
+    result = runner.invoke(app, ["collect-vessels", "--config", str(cfg)])
     assert result.exit_code == 2
     stderr = result.stderr
     as_bytes = stderr if isinstance(stderr, bytes) else (stderr or "").encode()
@@ -112,9 +112,16 @@ def test_placeholder_command_fails_clearly(tmp_path):
 
 def test_placeholder_never_reports_success(tmp_path):
     cfg = _copy_shipped_config(tmp_path)
-    for cmd in ["tile", "preprocess", "align", "split", "validate"]:
+    for cmd in ["split", "validate"]:
         result = runner.invoke(app, [cmd, "--config", str(cfg)])
         assert result.exit_code == 2, f"{cmd} must fail clearly"
+
+
+def test_implemented_commands_have_offline_dry_runs(tmp_path):
+    cfg = _copy_shipped_config(tmp_path)
+    for cmd in ["search-sentinel1", "search-sentinel3"]:
+        result = runner.invoke(app, [cmd, "--config", str(cfg), "--dry-run"])
+        assert result.exit_code == 0, result.output
 
 
 def test_version():

@@ -13,7 +13,6 @@ from marine_dataset.schemas import (
     ObsType,
     ProcessingOperation,
     Scene,
-    SceneSourceRef,
     SceneTime,
     VesselContext,
 )
@@ -36,8 +35,9 @@ def test_scene_time_requires_consistent_midpoint():
     start = datetime(2024, 1, 1, 10, 0, tzinfo=timezone.utc)
     end = datetime(2024, 1, 1, 10, 12, tzinfo=timezone.utc)
     with pytest.raises(ValidationError):
-        SceneTime(acquisition_start=end, acquisition_end=start,
-                  midpoint=start)  # reversed times -> error
+        SceneTime(
+            acquisition_start=end, acquisition_end=start, midpoint=start
+        )  # reversed times -> error
 
 
 def test_impossible_coordinate_rejected():
@@ -64,13 +64,16 @@ def test_invalid_score_rejected():
 
 
 def test_invalid_class_id_and_confidence():
-    src = SceneSourceRef(
-        source_name="CDSE", official_product_identifier="P1", platform="S1A"
-    )
     base = dict(
-        label_id="l1", dataset_version="0.1", scene_id="s1", class_name="x",
-        geometry_wkt="POINT(0 0)", crs="EPSG:4326", label_source="gov",
-        source_record_id="r1", source_url_or_identifier="u1",
+        label_id="l1",
+        dataset_version="0.1",
+        scene_id="s1",
+        class_name="x",
+        geometry_wkt="POINT(0 0)",
+        crs="EPSG:4326",
+        label_source="gov",
+        source_record_id="r1",
+        source_url_or_identifier="u1",
         annotation_timestamp=datetime.now(timezone.utc),
     )
     with pytest.raises(ValidationError):
@@ -93,14 +96,19 @@ def test_observation_vs_forecast_typing():
 
 def test_processing_operation_failure_requires_message():
     with pytest.raises(ValidationError):
-        ProcessingOperation(operation_name="cal", library="snap",
-                            library_version="9", failure_status=True)
+        ProcessingOperation(
+            operation_name="cal", library="snap", library_version="9", failure_status=True
+        )
 
 
 def test_vessel_context_record_type():
     with pytest.raises(ValidationError):
         VesselContext(
-            vessel_context_id="v1", dataset_version="0.1", scene_id="s1",
-            vessel_id="ship1", geometry_wkt="POINT(0 0)",
-            observed_at=datetime.now(timezone.utc), source_name="GFW",
+            vessel_context_id="v1",
+            dataset_version="0.1",
+            scene_id="s1",
+            vessel_id="ship1",
+            geometry_wkt="POINT(0 0)",
+            observed_at=datetime.now(timezone.utc),
+            source_name="GFW",
         )

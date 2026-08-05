@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import yaml
 import pytest
-from pathlib import Path
+import yaml
 
 
 @pytest.fixture

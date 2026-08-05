@@ -13,7 +13,7 @@ from marine_dataset.licences import (
     source_attribution_lines,
     write_licence_report,
 )
-from marine_dataset.provenance import LicenceStatus, load_registry
+from marine_dataset.provenance import load_registry
 
 
 def test_policy_allow_resolved(registry_fixture):

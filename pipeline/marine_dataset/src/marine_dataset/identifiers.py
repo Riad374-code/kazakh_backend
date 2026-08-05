@@ -25,9 +25,7 @@ class IdentifierError(ValueError):
 
 def _validate_namespace(namespace: str) -> None:
     if not _NAMESPACE_RE.match(namespace):
-        raise IdentifierError(
-            f"invalid namespace {namespace!r}; use lowercase [a-z0-9_.-]"
-        )
+        raise IdentifierError(f"invalid namespace {namespace!r}; use lowercase [a-z0-9_.-]")
 
 
 def _slug(value: str) -> str:
@@ -84,9 +82,7 @@ def stable_id(
 
 def scene_id(namespace: str, platform: str, product_identifier: str, version: str = "v1") -> str:
     """Stable id for a satellite scene from its canonical product identifier."""
-    return stable_id(
-        namespace, "scene", [platform, product_identifier], version=version
-    )
+    return stable_id(namespace, "scene", [platform, product_identifier], version=version)
 
 
 def tile_id(
@@ -107,11 +103,11 @@ def tile_id(
     )
 
 
-def label_id(namespace: str, source_record_id: str, annotation_method: str, version: str = "v1") -> str:
+def label_id(
+    namespace: str, source_record_id: str, annotation_method: str, version: str = "v1"
+) -> str:
     """Stable id for a label from its canonical source record id."""
-    return stable_id(
-        namespace, "label", [source_record_id, annotation_method], version=version
-    )
+    return stable_id(namespace, "label", [source_record_id, annotation_method], version=version)
 
 
 def record_id(

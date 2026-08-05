@@ -64,9 +64,7 @@ class LicencePolicy:
         return GateAction.allow
 
 
-def gate_warning_or_fail(
-    entry: SourceEntry, policy: LicencePolicy
-) -> Optional[GateAction]:
+def gate_warning_or_fail(entry: SourceEntry, policy: LicencePolicy) -> Optional[GateAction]:
     """Return the action to take, escalating to fail where the policy demands."""
     action = policy.action_for(entry)
     if action == GateAction.fail:
@@ -78,8 +76,7 @@ def gate_warning_or_fail(
         return GateAction.fail
     if action == GateAction.quarantine:
         reason = (
-            "incompatible" if entry.licence_status == LicenceStatus.incompatible
-            else "unresolved"
+            "incompatible" if entry.licence_status == LicenceStatus.incompatible else "unresolved"
         )
         log.warning("licence gate quarantining %s (%s)", entry.source_key, reason)
         return GateAction.quarantine
@@ -137,6 +134,29 @@ def _yesno(value: bool) -> str:
     return "yes" if value else "no"
 
 
+def _licence_table_rows(sources: list[dict]) -> list[str]:
+    rows = [
+        "| source_key | licence | status | commercial | redistribute | modify | share_alike | account | api_key | rate_limits | terms_checked_at |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|",
+    ]
+    for source in sources:
+        values = [
+            source["source_key"],
+            source["licence_name"] or "unverified",
+            source["licence_status"] or "?",
+            _yesno(source["commercial"]),
+            _yesno(source["redistribution"]),
+            _yesno(source["modification"]),
+            _yesno(bool(source["share_alike"])),
+            _yesno(source["account_required"]),
+            _yesno(source["api_key_required"]),
+            source["rate_limits"] or "-",
+            source["terms_checked_at"] or "NOT CHECKED",
+        ]
+        rows.append("| " + " | ".join(values) + " |")
+    return rows
+
+
 def render_licence_report(registry: SourceRegistry, repo_root: Path | str) -> str:
     """Render a human-readable licence_report.md from registry facts."""
     data = registry_report_data(registry)
@@ -164,23 +184,7 @@ def render_licence_report(registry: SourceRegistry, repo_root: Path | str) -> st
 
     lines.append("## Per-source status")
     lines.append("")
-    lines.append("| source_key | licence | status | commercial | redistribute | modify | share_alike | account | api_key | rate_limits | terms_checked_at |")
-    lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|")
-    for s in data["sources"]:
-        rows = [
-            s["source_key"],
-            s["licence_name"] or "unverified",
-            s["licence_status"] or "?",
-            _yesno(s["commercial"]),
-            _yesno(s["redistribution"]),
-            _yesno(s["modification"]),
-            _yesno(bool(s["share_alike"])),
-            _yesno(s["account_required"]),
-            _yesno(s["api_key_required"]),
-            s["rate_limits"] or "-",
-            s["terms_checked_at"] or "NOT CHECKED",
-        ]
-        lines.append("| " + " | ".join(rows) + " |")
+    lines.extend(_licence_table_rows(data["sources"]))
     lines.append("")
 
     lines.append("## Attribution & citation")

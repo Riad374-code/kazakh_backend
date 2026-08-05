@@ -64,9 +64,7 @@ class Storage:
     ) -> None:
         self.base = Path(base).resolve()
         self.raw = Path(raw).resolve() if raw else (self.base / "raw")
-        self._quarantine = (
-            Path(quarantine).resolve() if quarantine else (self.base / "quarantine")
-        )
+        self._quarantine = Path(quarantine).resolve() if quarantine else (self.base / "quarantine")
 
     # -- directories --------------------------------------------------------
 
@@ -92,9 +90,7 @@ class Storage:
         resolved = target.resolve()
         raw_root = self.raw.resolve()
         if resolved == raw_root or raw_root in resolved.parents:
-            raise RawImmutableError(
-                f"refusing to write {resolved}; data/raw is immutable"
-            )
+            raise RawImmutableError(f"refusing to write {resolved}; data/raw is immutable")
 
     # -- checksums & duplicates ---------------------------------------------
 
@@ -155,9 +151,7 @@ class Storage:
 
     # -- atomic derived writes ----------------------------------------------
 
-    def write_atomic_bytes(
-        self, path: Path, data: bytes, *, overwrite: bool = True
-    ) -> Path:
+    def write_atomic_bytes(self, path: Path, data: bytes, *, overwrite: bool = True) -> Path:
         """Atomically write derived bytes to ``path``.
 
         The write targets temp in the same directory then os.replace, so a crash
@@ -185,9 +179,7 @@ class Storage:
         self._fsync_dir(path.parent)
         return path
 
-    def write_atomic_file(
-        self, path: Path, source: BinaryIO, *, overwrite: bool = True
-    ) -> Path:
+    def write_atomic_file(self, path: Path, source: BinaryIO, *, overwrite: bool = True) -> Path:
         """Stream ``source`` into ``path`` atomically."""
         path = path.resolve()
         self.assert_raw_immutable(path)

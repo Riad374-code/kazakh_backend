@@ -11,7 +11,6 @@ source URL is stored for auditability.
 
 from __future__ import annotations
 
-import json
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
@@ -98,8 +97,7 @@ class SourceEntry(BaseModel):
     def _resolved_requires_check(self) -> "SourceEntry":
         if self.licence_status == LicenceStatus.resolved and self.terms_checked_at is None:
             raise ValueError(
-                "a source marked resolved must record terms_checked_at "
-                "(we do not guess licences)"
+                "a source marked resolved must record terms_checked_at (we do not guess licences)"
             )
         return self
 
@@ -186,7 +184,9 @@ def registry_report_data(registry: SourceRegistry) -> dict[str, Any]:
         "version": registry.version,
         "updated_at": registry.updated_at.isoformat() if registry.updated_at else None,
         "total_sources": len(registry.sources),
-        "resolved": len([s for s in registry.sources if s.licence_status == LicenceStatus.resolved]),
+        "resolved": len(
+            [s for s in registry.sources if s.licence_status == LicenceStatus.resolved]
+        ),
         "unresolved": len(registry.unresolved()),
         "incompatible": len(
             [s for s in registry.sources if s.licence_status == LicenceStatus.incompatible]

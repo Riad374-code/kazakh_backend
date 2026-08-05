@@ -12,7 +12,6 @@ from __future__ import annotations
 import hashlib
 import io
 import os
-import re
 from datetime import date, datetime
 from enum import Enum
 from pathlib import Path
@@ -122,9 +121,25 @@ class QualityThresholds(BaseModel):
     """Quality thresholds used to gate artifacts (section 15: quality thresholds)."""
 
     weather_delta_minutes: int = Field(default=90, ge=0)
+    weather_preferred_delta_minutes: int = Field(default=30, ge=0)
     ocean_delta_minutes: int = Field(default=90, ge=0)
     max_warnings: int = Field(default=20, ge=0)
     min_coverage_fraction: float = Field(default=0.5, ge=0.0, le=1.0)
+
+    @model_validator(mode="after")
+    def _weather_thresholds(self) -> "QualityThresholds":
+        if self.weather_preferred_delta_minutes > self.weather_delta_minutes:
+            raise ValueError("preferred weather threshold must not exceed acceptable threshold")
+        return self
+
+
+class PreprocessingConfig(BaseModel):
+    apply_precise_orbit: bool = True
+    remove_thermal_noise: bool = True
+    calibrate: bool = True
+    terrain_correct: bool = True
+    convert_to_db: bool = True
+    speckle_filter: bool = False
 
 
 class RetryPolicy(BaseModel):
@@ -202,7 +217,12 @@ class Config(BaseModel):
     scene_search: SceneSearchConfig = SceneSearchConfig()
     tile: TileConfig = TileConfig()
     weather_variables: list[str] = Field(default_factory=list)
+    weather_model: str = "era5"
     ocean_variables: list[str] = Field(default_factory=list)
+    ocean_dataset_id: Optional[str] = None
+    sentinel3_collections: list[str] = Field(
+        default_factory=lambda: ["sentinel-3-olci-2-wfr-ntc", "sentinel-3-sl-2-wst-ntc"]
+    )
     observations: list[ObservationType] = Field(
         default_factory=lambda: [ObservationType.reanalysis, ObservationType.observation]
     )
@@ -217,6 +237,7 @@ class Config(BaseModel):
     retry: RetryPolicy = RetryPolicy()
     paths: PathsConfig = PathsConfig()
     compression: CompressionConfig = CompressionConfig()
+    preprocessing: PreprocessingConfig = PreprocessingConfig()
     quality: QualityThresholds = QualityThresholds()
     logging: LoggingConfig = LoggingConfig()
     licence_on_incompatible: Literal["warn", "fail"] = "warn"
@@ -226,9 +247,7 @@ class Config(BaseModel):
     def _date_end_ge_start(cls, v: date, info: Any) -> date:
         date_start = info.data.get("date_start")
         if date_start is not None and v < date_start:
-            raise ValueError(
-                f"date_end ({v}) must be >= date_start ({date_start})"
-            )
+            raise ValueError(f"date_end ({v}) must be >= date_start ({date_start})")
         return v
 
     @field_validator("split_strategy")
@@ -263,16 +282,20 @@ class EnvOverrides:
 
     @staticmethod
     def load(source: dict[str, Any]) -> dict[str, Any]:
+        result = dict(source)
         for key, value in os.environ.items():
             if not key.startswith(_ENV_PREFIX):
                 continue
-            field_name = key[len(_ENV_PREFIX):].lower()
+            field_name = key[len(_ENV_PREFIX) :].lower()
             if field_name in {
-                "seed", "negative_sampling_ratio", "split_val_holdout",
-                "split_test_holdout", "licence_on_incompatible",
+                "seed",
+                "negative_sampling_ratio",
+                "split_val_holdout",
+                "split_test_holdout",
+                "licence_on_incompatible",
             }:
-                source[field_name] = EnvOverrides._coerce(value)
-        return source
+                result[field_name] = EnvOverrides._coerce(value)
+        return result
 
     @staticmethod
     def _coerce(value: str) -> Any:
@@ -366,5 +389,5 @@ def json_roundtrip(value: Any) -> Any:
     if isinstance(value, Enum):
         return value.value
     if isinstance(value, SecretStr):
-        return value.get_secret_value()
+        return str(value)
     return value

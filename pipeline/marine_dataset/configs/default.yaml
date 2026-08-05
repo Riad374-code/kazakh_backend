@@ -45,7 +45,20 @@ tile:
 
 # --- Variables (select after choosing regions) ---------------------------------
 weather_variables: []
+weather_model: "era5"
 ocean_variables: []
+ocean_dataset_id: null
+sentinel3_collections:
+  - "sentinel-3-olci-2-wfr-ntc"
+  - "sentinel-3-sl-2-wst-ntc"
+
+preprocessing:
+  apply_precise_orbit: true
+  remove_thermal_noise: true
+  calibrate: true
+  terrain_correct: true
+  convert_to_db: true
+  speckle_filter: false
 
 # --- Label ontology ------------------------------------------------------------
 ontology_path: "configs/label_ontology.yaml"
@@ -95,6 +108,7 @@ compression:
 
 # --- Quality thresholds ---------------------------------------------------------
 quality:
+  weather_preferred_delta_minutes: 30
   weather_delta_minutes: 90
   ocean_delta_minutes: 90
   max_warnings: 20

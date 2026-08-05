@@ -19,7 +19,7 @@ sources:
     share_alike: false
     licence_status: resolved
     account_required: true
-    api_key_required: true
+    api_key_required: false
     rate_limits: "CDSE free quota (fair use); large downloads may require authenticated access"
     geographic_coverage: "Global"
     temporal_coverage: "2014-present"
@@ -52,7 +52,7 @@ sources:
     share_alike: false
     licence_status: resolved
     account_required: true
-    api_key_required: true
+    api_key_required: false
     rate_limits: "CDSE free quota (fair use)"
     geographic_coverage: "Global"
     temporal_coverage: "2016-present"
@@ -80,7 +80,7 @@ sources:
     commercial_use: false
     redistribution: true
     modification: true
-    share_alike: true
+    share_alike: false
     licence_status: resolved
     account_required: false
     api_key_required: false
@@ -114,7 +114,7 @@ sources:
     share_alike: false
     licence_status: resolved
     account_required: true
-    api_key_required: true
+    api_key_required: false
     rate_limits: "CMEMS account quota; per-product limits"
     geographic_coverage: "Global / Regional"
     temporal_coverage: "1992-present (varies by product)"
