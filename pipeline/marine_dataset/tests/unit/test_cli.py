@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from marine_dataset.cli import app
@@ -101,6 +102,7 @@ def test_init_config_refuses_to_overwrite_source(tmp_path):
     assert result.exit_code != 0
 
 
+@pytest.mark.skip(reason="All pipeline placeholders are now fully implemented in Steps 11-24")
 def test_placeholder_command_fails_clearly(tmp_path):
     cfg = _copy_shipped_config(tmp_path)
     result = runner.invoke(app, ["collect-vessels", "--config", str(cfg)])
