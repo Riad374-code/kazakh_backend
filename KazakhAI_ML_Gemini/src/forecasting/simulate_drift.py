@@ -10,7 +10,7 @@ import logging
 import time
 import sys
 from pathlib import Path
-from typing import Tuple
+from typing import Dict, List, Tuple, Any
 import numpy as np
 
 project_root = Path(__file__).resolve().parent.parent.parent
@@ -79,7 +79,7 @@ class CaspianLagrangianDriftEngine:
         """
         return ~water_mask(lat, lon)
 
-    def simulate(self, release_lat: float = 40.35, release_lon: float = 50.45, slick_radius_km: float = 2.5) -> str:
+    def simulate(self, release_lat: float = 40.35, release_lon: float = 50.45, slick_radius_km: float = 2.5) -> Tuple[str, List[Dict[str, Any]]]:
         """
         Executes multi-step Lagrangian hydrodynamic simulation and generates complete web animation series.
         """
@@ -167,8 +167,8 @@ class CaspianLagrangianDriftEngine:
                 trajectory_frames.append({
                     "step": step,
                     "day": round(elapsed_days, 1),
-                    "active_floating_particles": int(np.sum(active_mask)),
-                    "beached_shoreline_particles": beached_count,
+                    "active_particles": int(np.sum(active_mask)),
+                    "beached_particles": beached_count,
                     "remaining_floating_oil_tons": round(float(current_mass), 2),
                     "centroid_lat": round(centroid_lat, 5),
                     "centroid_lon": round(centroid_lon, 5),
@@ -207,7 +207,7 @@ if __name__ == "__main__":
     for idx in [0, 2, 7, 15, -1]:
         if idx < len(frames):
             frame = frames[idx]
-            print(f"  Day {frame.get('day', 0):02.1f} | Active Floating Droplets: {frame.get('active_floating_particles', frame.get('active_particles', 'N/A'))}/500 | Beached on Shoreline: {frame.get('beached_shoreline_particles', frame.get('beached_particles', 'N/A'))} | Centroid: [{frame.get('centroid_lat'):.4f} N, {frame.get('centroid_lon'):.4f} E] | Dispersion Radius: {frame.get('dispersion_radius_km'):.2f} km")
+            print(f"  Day {frame.get('day', 0):02.1f} | Active Floating Droplets: {frame.get('active_particles', 'N/A')}/500 | Beached on Shoreline: {frame.get('beached_particles', 'N/A')} | Centroid: [{frame.get('centroid_lat'):.4f} N, {frame.get('centroid_lon'):.4f} E] | Dispersion Radius: {frame.get('dispersion_radius_km'):.2f} km")
             
     print(f"\n[VERIFIED CHECKPOINT] Interactive Web Animation Exported To: {file_path}")
     print("[SUCCESS] STEP 16 COMPLETE: 30-Day Lagrangian Hydrodynamic Drift Suite is verified and operational!")
