@@ -8,7 +8,12 @@ import os
 import sys
 import json
 import time
+import tempfile
 from pathlib import Path
+
+# Verification writes engine outputs to a throwaway scratch dir so the committed
+# seed checkpoints (src/checkpoints/*.json) are NEVER overwritten by this suite.
+VERIFY_SCRATCH_DIR = Path(tempfile.mkdtemp(prefix="verify_ai_scratch_"))
 
 def print_banner(title: str):
     print(f"\n==================================================================")
@@ -40,7 +45,8 @@ def run_ai_engine_diagnostics():
     print("\n--- [2/5] VERIFYING 30-DAY LAGRANGIAN DRIFT FORECASTING SUITE ---")
     try:
         from src.forecasting.simulate_drift import CaspianLagrangianDriftEngine
-        drift_engine = CaspianLagrangianDriftEngine(num_particles=200, time_step_hours=3.0, total_days=30)
+        drift_engine = CaspianLagrangianDriftEngine(num_particles=200, time_step_hours=3.0, total_days=30,
+                                                    output_dir=str(VERIFY_SCRATCH_DIR))
         json_path, frames = drift_engine.simulate(release_lat=40.35, release_lon=50.45, slick_radius_km=2.5)
         f30 = frames[-1]
         print(f"  [SUCCESS] 30-Day Lagrangian physics completed in real-time over Baku offshore sector!")
@@ -53,7 +59,7 @@ def run_ai_engine_diagnostics():
     print("\n--- [3/5] VERIFYING 8-FACTOR CLEANUP PRIORITY RANKING MATRIX ---")
     try:
         from src.pipeline.priority_engine import CaspianPriorityEngine
-        priority_engine = CaspianPriorityEngine()
+        priority_engine = CaspianPriorityEngine(output_dir=str(VERIFY_SCRATCH_DIR))
         test_spills = [
             {"incident_id": "SPILL_BAKU_BAY", "location_name": "Baku Nearshore Bay", "pollution_size_km2": 15.0, "toxicity_score": 1.0, "coastline_distance_m": 800.0, "affected_population_density": 2500.0, "forecast_spread_rate_km2_day": 3.2, "detection_confidence": 0.95},
             {"incident_id": "OBS_VOLGA_SILT", "location_name": "Volga Delta Sediment", "pollution_size_km2": 28.0, "toxicity_score": 0.1, "coastline_distance_m": 400.0, "affected_population_density": 80.0, "forecast_spread_rate_km2_day": 0.2, "detection_confidence": 0.80}
@@ -70,7 +76,8 @@ def run_ai_engine_diagnostics():
     print("\n--- [4/5] VERIFYING REGIONAL THREAT HEATMAP GENERATION MATRIX ---")
     try:
         from src.pipeline.risk_heatmap import CaspianRiskHeatmapGenerator
-        heatmap_gen = CaspianRiskHeatmapGenerator(grid_resolution_lat=10, grid_resolution_lon=10)
+        heatmap_gen = CaspianRiskHeatmapGenerator(grid_resolution_lat=10, grid_resolution_lon=10,
+                                                  output_dir=str(VERIFY_SCRATCH_DIR))
         heatmap_data, hm_path = heatmap_gen.generate_regional_heatmap_grid()
         print(f"  [SUCCESS] Synthesized {len(heatmap_data['grid_cells'])} spatial evaluation squares across Caspian Sea basin!")
         top_cell = heatmap_data["grid_cells"][0]
