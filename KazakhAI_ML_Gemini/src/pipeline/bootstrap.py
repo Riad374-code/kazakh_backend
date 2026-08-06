@@ -26,6 +26,14 @@ logger = logging.getLogger("BootstrapOrchestrator")
 def run_full_refresh(db: Optional[CaspianDatabase] = None) -> Dict[str, Any]:
     db = db or CaspianDatabase()
 
+    # Serialize the entire refresh cycle: the background scheduler and the
+    # /admin/refresh endpoint share the same SQLite connection, and concurrent
+    # multi-statement writes surface as sqlite3 SQLITE_MISUSE errors.
+    with db.locked():
+        return _run_full_refresh_locked(db)
+
+
+def _run_full_refresh_locked(db: CaspianDatabase) -> Dict[str, Any]:
     # 1. Seed checkpoints into SQLite (idempotent unless force)
     seed_from_checkpoints(db)
     db.commit()

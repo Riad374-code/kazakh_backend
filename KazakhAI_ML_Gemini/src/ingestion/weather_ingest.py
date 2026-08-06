@@ -78,28 +78,28 @@ def ingest_weather(db: Optional[CaspianDatabase] = None, *, live: bool = True) -
     ingested = 0
     used_live = False
 
-    for station, lat, lon in STATIONS:
-        values = None
-        if live:
-            values = _fetch_station(lat, lon)
-        if not values:
-            values = _synthetic_record(lat, lon)
-        else:
-            used_live = True
+    with db.locked():
+        for station, lat, lon in STATIONS:
+            values = None
+            if live:
+                values = _fetch_station(lat, lon)
+            if not values:
+                values = _synthetic_record(lat, lon)
+            else:
+                used_live = True
 
-        db.insert_weather({
-            "observed_at": observed_at,
-            "coordinates_lat": round(lat, 3),
-            "coordinates_lon": round(lon, 3),
-            "wind_speed_ms": values.get("wind_speed_ms"),
-            "wind_direction_deg": values.get("wind_direction_deg"),
-            "rainfall_mm": values.get("rainfall_mm"),
-            "sea_surface_temp_c": values.get("sea_surface_temp_c"),
-            "source": "open-meteo-live" if (live and values and used_live) else "synthetic-fallback",
-        })
-        ingested += 1
-
-    db.commit()
+            db.insert_weather({
+                "observed_at": observed_at,
+                "coordinates_lat": round(lat, 3),
+                "coordinates_lon": round(lon, 3),
+                "wind_speed_ms": values.get("wind_speed_ms"),
+                "wind_direction_deg": values.get("wind_direction_deg"),
+                "rainfall_mm": values.get("rainfall_mm"),
+                "sea_surface_temp_c": values.get("sea_surface_temp_c"),
+                "source": "open-meteo-live" if (live and values and used_live) else "synthetic-fallback",
+            })
+            ingested += 1
+        db.commit()
     logger.info(f"Ingested {ingested} weather records "
                 f"({'live Open-Meteo' if used_live else 'synthetic fallback'}).")
     return {

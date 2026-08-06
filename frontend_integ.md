@@ -1,12 +1,14 @@
-# Frontend Integration Guide — Caspian Sea AI Marine Pollution & Hydrodynamics Logic API
+# Frontend Integration Guide — Khudaferin API (Caspian Sea AI Marine Pollution & Hydrodynamics)
 
 This document is the **authoritative contract** the frontend team should follow when
-integrating the Caspian AI backend. Every endpoint, its purpose, its parameters, its
+integrating the Khudaferin backend. Every endpoint, its purpose, its parameters, its
 response shape, and how the UI should consume it is documented below.
 
 ---
 
 ## 1. How to run the backend
+
+### Local development
 
 ```
 cd KazakhAI_ML_Gemini
@@ -22,9 +24,25 @@ and starts a **background scheduler** that recomputes all analysis stages period
 (default interval `3600s`, configurable via env `REFRESH_INTERVAL_SECONDS`). You do NOT
 need to pre-seed anything — data is generated from verified pipeline checkpoints.
 
+### Deployed (Railway)
+
+The repo is Railway-ready (root `Dockerfile` + `railway.toml`). After deployment the API
+base URL is the Railway-generated domain, e.g. `https://khudaferin.up.railway.app`.
+Swagger lives at `<base>/docs`; the machine-readable spec at `<base>/openapi.json`.
+
+Use `GET <base>/api/v1` to programmatically discover the full route list at runtime.
+
+Environment variables you may set on Railway:
+
+| Variable | Default | Purpose |
+| :--- | :--- | :--- |
+| `CORS_ORIGINS` | `*` | Comma-separated frontend origins allowed by CORS. |
+| `REFRESH_INTERVAL_SECONDS` | `3600` | Scheduler refresh interval. |
+| `DATABASE_PATH` | unset | SQLite file path; set to a Volume mount for persistence. |
+
 ### CORS
-CORS is wide open (`allow_origins=["*"]`) for local frontend development. In production,
-restrict to your frontend host.
+CORS is wide open by default (`allow_origins=["*"]`, credentials disabled). In production,
+set `CORS_ORIGINS` to your frontend host(s) so the browser allows credentialed requests.
 
 ### Auth
 There is **no authentication**. Do not expose `/admin/*` endpoints in production-facing
@@ -60,8 +78,23 @@ Legend — `B` = Business data, `A` = Admin/system, `L` = Legacy compatibility.
 
 ### 3.1 Glass / Health
 
-#### `GET /`  (alias of health)
+#### `GET /`
 **Purpose:** Root health checkpoint.
+
+#### `GET /api/v1`
+**Purpose:** API discovery index. Returns project metadata plus the full list of routes so
+the frontend can render navigation / confirm a route exists before calling it.
+
+```jsonc
+{
+  "status": "success",
+  "project": "khudaferin",
+  "api_version": "2.2.0-RAILWAY",
+  "documentation": "/docs",
+  "openapi_spec": "/openapi.json",
+  "routes": [ {"method": "GET", "path": "/api/v1/health", "methods": ["GET"]}, ... ]
+}
+```
 
 #### `GET /api/v1/health`
 **Purpose:** Diagnostics, model roster, DB read counts, scheduler status, active checkpoints.
@@ -71,7 +104,8 @@ badge (models online, DB counts).
 ```jsonc
 {
   "server_status": "ONLINE",
-  "api_version": "2.1.0-PROD",
+  "project": "khudaferin",
+  "api_version": "2.2.0-RAILWAY",
   "region_coverage": "Caspian Sea Basin (EPSG:4326)",
   "active_models": {
     "anomaly_detection": "Stage 1 rolling z-score (SAR + water quality)",
@@ -336,6 +370,8 @@ remaining_floating_oil_tons, centroid_lat, centroid_lon, dispersion_radius_km`.
 #### `POST /api/v1/admin/refresh`
 Recompute all analysis stages (risk, energy, trend, anomaly) + ingest weather; returns the
 refresh result dict. 500 on failure.
+**Body (optional, typed):** `{"recompute_weather": true}` — set `false` to skip the weather pass.
+Calling with `{}` or no body is fully supported (backwards compatible).
 
 #### `POST /api/v1/admin/weather`
 Live weather/rain ingestion only.
@@ -346,9 +382,14 @@ Live weather/rain ingestion only.
 
 #### `POST /api/v1/detect/segment`
 **Purpose:** live SAR segmentation probe.
-**Body example:** `{"scene_id":"S1A_IW_GRD_BAKU_2026","latitude":40.4,"longitude":50.3}`
-**Response:** `{ "status":"success","scene_id":...,"segmentation_result": { "anomaly_detected":true,
-"predicted_class":"oil_hollow","ai_confidence":95.8,
+**Body (typed schema):**
+```jsonc
+{ "scene_id": "S1A_IW_GRD_BAKU_2026", "latitude": 40.4, "longitude": 50.3 }
+```
+All three fields are optional (defaults `"LIVE_SAR_OBSERVATION_CASPIAN"`, `40.35`, `50.45`);
+`latitude`/`longitude` are range-validated (`±90` / `±180`) — invalid values return HTTP `422`.
+**Response:** `{ "status":"success", "scene_id":..., "segmentation_result": { "anomaly_detected":true,
+"predicted_class":"oil_hydrocarbon","ai_confidence":95.8,
 "polygon_boundary_geojson":{Polygon GeoJSON}, "recommended_action":"..." } }`
 > The returned `polygon_boundary_geojson` is already GeoJSON — draw it directly on the map.
 
@@ -397,6 +438,7 @@ Live weather/rain ingestion only.
 Fire every endpoint; expect 200.
 ```
 GET  /
+GET  /api/v1
 GET  /api/v1/health
 GET  /api/v1/incidents                       (+ ?status=&type=&min/max_priority=&limit=)
 GET  /api/v1/incidents/{id}
@@ -417,4 +459,4 @@ POST /api/v1/admin/refresh    {}
 POST /api/v1/admin/weather    {}
 ```
 *(All of the above have been verified to return `200 OK` against the current build — count was
- 19 routes.)*
+ 20 routes.)*

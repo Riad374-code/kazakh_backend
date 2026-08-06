@@ -8,15 +8,17 @@ Backed by a dependency-free SQLite operational store that bootstraps from the
 verified pipeline checkpoints on startup and refreshes on demand.
 """
 
+import os
 import sys
 import json
 import logging
 import threading
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, BackgroundTasks, status, Query
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
 # Add parent directories to Python path for internal model imports
 current_dir = Path(__file__).resolve().parent
@@ -25,7 +27,7 @@ for p in (str(project_root), str(project_root / "src")):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-from src.pipeline.scheduler import DEFAULT_INTERVAL_SECONDS as DEFAULT_REFRESH_INTERVAL_SECONDS
+from src.pipeline.scheduler import DEFAULT_INTERVAL_SECONDS as DEFAULT_REFRESH_INTERVAL_SECONDS  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: [%(name)s] %(message)s")
 logger = logging.getLogger("LogicAPI_Server")
@@ -89,18 +91,20 @@ async def lifespan(app: FastAPI):
 
 # Initialize core FastAPI server app
 app = FastAPI(
-    title="Caspian Sea AI Marine Pollution & Hydrodynamics Logic API",
-    description="Backend AI inference, forecasting, spilling-risk and energy-impact engine for "
-                "real-time offshore disaster management over the Caspian Sea.",
-    version="2.1.0-PROD",
+    title="Khudaferin - Caspian Sea AI Marine Pollution & Hydrodynamics Logic API",
+    description="Khudaferin backend: AI inference, hydrodynamic forecasting, spilling-risk and "
+                "energy-impact engine for real-time offshore disaster management over the Caspian Sea.",
+    version="2.2.0-RAILWAY",
     lifespan=lifespan,
 )
 
-# Enable CORS for local frontend development and web map integrations
+# CORS: allow origins from env (comma-separated), default to wide-open for demo.
+# allow_credentials=False is required when origins is "*" (per CORS spec).
+_cors_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "*").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production deployment, restrict to domain hosts
-    allow_credentials=True,
+    allow_origins=_cors_origins or ["*"],
+    allow_credentials=("*" not in _cors_origins),
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -121,6 +125,23 @@ def _load_checkpoint_json(filename: str) -> Dict[str, Any]:
         return {"status": "error", "message": str(e)}
 
 
+# --------------------------------------------------------------------------
+# Typed request bodies (expose clean schemas to the frontend via /docs)
+# --------------------------------------------------------------------------
+class SegmentRequest(BaseModel):
+    """Live SAR segmentation probe payload."""
+
+    scene_id: str = Field(default="LIVE_SAR_OBSERVATION_CASPIAN", description="SAR scene identifier.")
+    latitude: float = Field(default=40.35, ge=-90.0, le=90.0, description="WGS84 latitude of observation.")
+    longitude: float = Field(default=50.45, ge=-180.0, le=180.0, description="WGS84 longitude of observation.")
+
+
+class RefreshRequest(BaseModel):
+    """Optional body for the admin refresh trigger (reserved for future filters)."""
+
+    recompute_weather: bool = Field(default=True, description="Whether to ingest live weather during refresh.")
+
+
 @app.get("/", summary="Root API Health Checkpoint")
 @app.get("/api/v1/health", summary="Detailed Diagnostic & Readiness Evaluation")
 def check_health() -> Dict[str, Any]:
@@ -128,7 +149,8 @@ def check_health() -> Dict[str, Any]:
     db = _get_db()
     return {
         "server_status": "ONLINE",
-        "api_version": "2.1.0-PROD",
+        "project": "khudaferin",
+        "api_version": "2.2.0-RAILWAY",
         "region_coverage": "Caspian Sea Basin (EPSG:4326)",
         "storage_backend": "SQLite (dependency-free operational store)",
         "active_models": {
@@ -151,6 +173,28 @@ def check_health() -> Dict[str, Any]:
             "interval_seconds": DEFAULT_REFRESH_INTERVAL_SECONDS,
             "endpoint": "POST /api/v1/admin/refresh",
         },
+    }
+
+
+@app.get("/api/v1", summary="API Discovery Index (for frontend integration)")
+def api_index() -> Dict[str, Any]:
+    """Returns the Khudaferin API base info plus the full list of available routes."""
+    routes = []
+    for route in app.routes:
+        methods = sorted(getattr(route, "methods", []) or [])
+        if not methods:
+            continue
+        path = getattr(route, "path", "")
+        if path.startswith("/api"):
+            routes.append({"method": methods[0], "path": path, "methods": methods})
+    routes.sort(key=lambda r: (r["method"], r["path"]))
+    return {
+        "status": "success",
+        "project": "khudaferin",
+        "api_version": app.version,
+        "documentation": "/docs",
+        "openapi_spec": "/openapi.json",
+        "routes": routes,
     }
 
 
@@ -373,8 +417,10 @@ def weather_history(limit: int = Query(default=100, ge=1, le=1000)) -> Dict[str,
 # Admin / integration endpoints
 # ===========================================================================
 @app.post("/api/v1/admin/refresh", summary="Recompute all analysis stages & refresh DB cache")
-def admin_refresh(_: Dict[str, Any] = None) -> Dict[str, Any]:
+def admin_refresh(body: Optional[RefreshRequest] = None) -> Dict[str, Any]:
     try:
+        if body is not None and not body.recompute_weather:
+            return _run_refresh()
         return _run_refresh_with_weather()
     except Exception as exc:
         logger.error(f"Admin refresh failed: {exc}")
@@ -382,7 +428,7 @@ def admin_refresh(_: Dict[str, Any] = None) -> Dict[str, Any]:
 
 
 @app.post("/api/v1/admin/weather", summary="Trigger a live weather/rainfall ingestion pass")
-def admin_weather(_: Dict[str, Any] = None) -> Dict[str, Any]:
+def admin_weather(_: Optional[RefreshRequest] = None) -> Dict[str, Any]:
     from src.ingestion.weather_ingest import ingest_weather
     return ingest_weather(_get_db(), live=True)
 
@@ -414,10 +460,10 @@ def get_regional_heatmap() -> Dict[str, Any]:
 
 
 @app.post("/api/v1/detect/segment", summary="Live Inference Endpoint for Segmentation")
-def execute_live_segmentation_inference(payload: Dict[str, Any]) -> Dict[str, Any]:
-    scene_id = payload.get("scene_id", "LIVE_SAR_OBSERVATION_CASPIAN")
-    lat = float(payload.get("latitude", 40.35))
-    lon = float(payload.get("longitude", 50.45))
+def execute_live_segmentation_inference(payload: SegmentRequest) -> Dict[str, Any]:
+    scene_id = payload.scene_id
+    lat = payload.latitude
+    lon = payload.longitude
     logger.info(f"Executing live segmentation probe on payload: {scene_id} [{lat} N, {lon} E]...")
     return {
         "status": "success",
@@ -452,6 +498,8 @@ if __name__ == "__main__":
 
     # Health
     check("GET /api/v1/health", client.get("/api/v1/health"))
+    # API discovery index
+    check("GET /api/v1", client.get("/api/v1"))
     # Incidents + filters
     r = check("GET /api/v1/incidents", client.get("/api/v1/incidents")) 
     for i in r.json().get("incidents", []):

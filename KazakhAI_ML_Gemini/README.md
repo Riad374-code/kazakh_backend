@@ -1,6 +1,6 @@
-# ⚡ KazakhAI_ML_Gemini: Caspian Sea Marine Pollution AI Engine & Logic API
+# ⚡ Khudaferin: Caspian Sea Marine Pollution AI Engine & Logic API
 
-This module represents the centralized **Artificial Intelligence, Hydrodynamic Forecasting, and Cleanup Priority Logic API** for our marine disaster management platform.
+This module represents the centralized **Artificial Intelligence, Hydrodynamic Forecasting, and Cleanup Priority Logic API** for our marine disaster management platform (project name: **Khudaferin**).
 
 ---
 
@@ -28,6 +28,7 @@ checkpoints on startup (`POST /api/v1/admin/refresh` recomputes all stages on de
 
 | HTTP Route | Purpose | Description |
 | :--- | :--- | :--- |
+| `GET /api/v1` | **API Discovery** | Project info + full list of available `/api/v1` routes. |
 | `GET /api/v1/health` | **Diagnostics** | Server status + stored model/database counts. |
 | `GET /api/v1/incidents` | **Current Pollution** | Ranked incident list (Index Data) with filters `type`, `status`, `min_priority`, `max_priority`, `limit`. |
 | `GET /api/v1/incidents/{id}` | **Incident Details** | Full detail + forecasts + risk + energy impact. |
@@ -45,8 +46,8 @@ checkpoints on startup (`POST /api/v1/admin/refresh` recomputes all stages on de
 | `GET /api/v1/timeline` | **Timeline** | Forecase milestones per incident, range-filterable. |
 | `GET /api/v1/weather` | **Weather History** | Stored weather records. |
 | `GET /api/v1/heatmap/grid` | **Heatmap Overlay** | 100-cell regional risk grid. |
-| `POST /api/v1/admin/refresh` | **Refresh** | Recompute risk/energy/trend/anomaly + refresh DB cache. |
-| `POST /api/v1/detect/segment` | **Live Inference** | Live oil-spill segmentation probe. |
+| `POST /api/v1/admin/refresh` | **Refresh** | Recompute risk/energy/trend/anomaly + refresh DB cache (body optional: `{"recompute_weather": true}`). |
+| `POST /api/v1/detect/segment` | **Live Inference** | Live oil-spill segmentation probe. Body: `{"scene_id","latitude","longitude"}`. |
 
 Interactive Swagger docs: `http://localhost:8000/docs`.
 
@@ -73,6 +74,46 @@ stages fresh. Iteractive Swagger documentation is available at: `http://localhos
 ### 3. Run the background scheduler standalone
 ```bash
 python -m src.pipeline.scheduler --interval-seconds 3600 --run-once
+```
+
+---
+
+## ☁️ Railway Deployment (Production)
+
+The repository is configured for **Railway** via a root-level `Dockerfile` + `railway.toml`.
+Deploying is one click: connect the GitHub repo to Railway and it auto-detects the config.
+
+**What ships to Railway:**
+- A **minimal, torch-free image** (`requirements-server.txt`): `fastapi`, `uvicorn`, `pydantic`.
+  The API serves verified pipeline checkpoints, so the multi-GB ML training stack
+  (`torch`, `numpy`) is intentionally **not** deployed. Torch-only modules
+  (`src/models/*`, `src/ingestion/contract_loader.py`) are never imported by the server.
+- All 19+ endpoints, the background scheduler, and the SQLite store auto-seeding from the
+  committed checkpoints on every boot.
+- Railway's injected `PORT` env is used automatically by the start command.
+
+**Recommended Railway environment variables:**
+
+| Variable | Default | Purpose |
+| :--- | :--- | :--- |
+| `DATA_DIR` | `/app/data` | Writable directory for the SQLite operational store. |
+| `DATABASE_PATH` | *(unset)* | Full path to the DB file. Set to a Railway Volume mount (e.g. `/data/kazakh_ai.db`) for persistence across redeploys. |
+| `REFRESH_INTERVAL_SECONDS` | `3600` | Background scheduler refresh interval. |
+| `CORS_ORIGINS` | `*` | Comma-separated frontend origins (e.g. `https://khudaferin.app,http://localhost:3000`). |
+
+**Important deployment notes:**
+- **SQLite is ephemeral** on Railway's default filesystem — it resets on each redeploy but is
+  re-seeded automatically. Attach a **Volume** and set `DATABASE_PATH` if you need persistence.
+- **The ML/training modules are not recommended to deploy:** the U-Net/classifier/drift-sim
+  run locally with the full `requirements.txt` (requires torch, and training needs a GPU +
+  Copernicus satellite data). The deployed `/api/v1/detect/segment` endpoint is a demo probe.
+- The `pipeline/marine_dataset` data-engineering tool (Copernicus CDSE credentials + heavy
+  geo-stack) is excluded from the image via `.dockerignore`; run it locally, not on Railway.
+- Healthcheck: Railway pings `GET /api/v1/health` (configured in `railway.toml`).
+
+**Local smoke test against a fresh boot (simulates Railway):**
+```bash
+DATABASE_PATH=$(mktemp -d)/kazakh_ai.db uvicorn api.app:app --host 0.0.0.0 --port 8000
 ```
 
 ---

@@ -1,0 +1,8 @@
+# Deployment (Railway) dependencies for the Khudaferin Logic API.
+# Minimal on purpose: the API serves verified pipeline checkpoints, so the
+# heavy ML/training stack (torch, numpy) is intentionally NOT installed here.
+# Torch-only modules (src/models, src/ingestion/contract_loader) are never
+# imported by the server code path.
+fastapi>=0.100.0
+uvicorn>=0.22.0
+pydantic>=2.0.0
