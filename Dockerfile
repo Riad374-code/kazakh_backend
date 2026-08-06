@@ -20,6 +20,7 @@ RUN pip install --upgrade pip && pip install -r requirements-server.txt
 # --- Layer 2: application code + verified pipeline checkpoints (seed data) --
 COPY KazakhAI_ML_Gemini/api ./api
 COPY KazakhAI_ML_Gemini/src ./src
+COPY KazakhAI_ML_Gemini/run.py ./run.py
 
 # Writable runtime directory for the SQLite operational store.
 # Attach a Railway volume here (or set DATABASE_PATH) for persistence.
@@ -29,4 +30,4 @@ EXPOSE 8000
 
 # uvicorn, single worker: the app owns a single SQLite connection plus a
 # background scheduler thread, so a single process is the correct topology.
-CMD ["sh", "-c", "uvicorn api.app:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
+CMD ["python", "run.py"]
