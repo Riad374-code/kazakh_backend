@@ -8,9 +8,14 @@ import math
 import json
 import logging
 import time
+import sys
 from pathlib import Path
 from typing import Tuple
 import numpy as np
+
+project_root = Path(__file__).resolve().parent.parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
 from src.forecasting.caspian_mask import water_mask
 
@@ -122,17 +127,24 @@ class CaspianLagrangianDriftEngine:
             dx_m = (u_total * self.dt_seconds) + np.random.normal(0, sigma_dispersion, size=self.num_particles)
             dy_m = (v_total * self.dt_seconds) + np.random.normal(0, sigma_dispersion, size=self.num_particles)
             
-            # Update geographic particle positions (only for floating non-beached particles)
+            # Calculate proposed new positions for currently active particles
             lat_change_deg = (dy_m / 1000.0) * deg_per_km
             lon_change_deg = (dx_m / 1000.0) * (deg_per_km / np.cos(np.radians(lat)))
             
-            lat[active_status] += lat_change_deg[active_status]
-            lon[active_status] += lon_change_deg[active_status]
+            new_lat = lat.copy()
+            new_lon = lon.copy()
+            new_lat[active_status] += lat_change_deg[active_status]
+            new_lon[active_status] += lon_change_deg[active_status]
             
-            # Check for new shoreline beaching events
-            new_beached = self._is_beached_shoreline(lat, lon) & active_status
-            active_status[new_beached] = False
-            beached_count += int(np.sum(new_beached))
+            # Evaluate coastline boundary crossing BEFORE committing the coordinate jump!
+            # If a proposed leap crosses onto dry land, mark as beached and freeze at current valid water coordinate.
+            beached_attempt = self._is_beached_shoreline(new_lat, new_lon) & active_status
+            active_status[beached_attempt] = False
+            beached_count += int(np.sum(beached_attempt))
+            
+            # Only apply movement to particles that successfully remain in open water
+            lat[active_status] = new_lat[active_status]
+            lon[active_status] = new_lon[active_status]
             
             # Apply weathering evaporative loss curve (exp decay on floating fraction)
             elapsed_days = (step * self.dt_hours) / 24.0
