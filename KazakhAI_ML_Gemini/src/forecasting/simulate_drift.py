@@ -4,14 +4,15 @@ Models marine petroleum surface transport by combining Copernicus ocean current 
 with Open-Meteo wind drag and turbulent eddy diffusion across the Caspian Sea basin.
 """
 
-import os
 import math
 import json
 import logging
 import time
 from pathlib import Path
-from typing import Dict, Any, List, Tuple
+from typing import Tuple
 import numpy as np
+
+from src.forecasting.caspian_mask import water_mask
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: [%(name)s] %(message)s")
 logger = logging.getLogger("LagrangianDriftEngine")
@@ -65,17 +66,13 @@ class CaspianLagrangianDriftEngine:
 
     def _is_beached_shoreline(self, lat: np.ndarray, lon: np.ndarray) -> np.ndarray:
         """
-        Geographically evaluates whether drifting particles have washed ashore onto Caspian Sea boundaries.
-        Simplified polygon envelope for the Central & Southern Caspian Basin.
+        Geographically evaluates whether drifting particles have washed ashore.
+
+        Uses the coarse Caspian water/land mask: any particle whose position
+        falls outside the sea basin (i.e. over land or beyond the coastline
+        envelope) is considered beached and stops advecting.
         """
-        beached = np.zeros(len(lat), dtype=bool)
-        # Western boundary (Azerbaijan / Baku coastline)
-        beached = beached | (lon < 49.3) | ((lat > 39.8) & (lat < 40.8) & (lon < 49.8))
-        # Eastern boundary (Turkmenistan / Kazakhstan coastlines)
-        beached = beached | (lon > 54.1) | ((lat > 42.0) & (lon > 53.0))
-        # Northern / Southern bounding caps
-        beached = beached | (lat < 36.6) | (lat > 47.1)
-        return beached
+        return ~water_mask(lat, lon)
 
     def simulate(self, release_lat: float = 40.35, release_lon: float = 50.45, slick_radius_km: float = 2.5) -> str:
         """
@@ -95,15 +92,16 @@ class CaspianLagrangianDriftEngine:
         trajectory_frames = []
 
         # Record Initial Release State
+        active_mask = active_status
         trajectory_frames.append({
             "step": 0,
             "day": 0.0,
-            "active_particles": int(np.sum(active_status)),
+            "active_particles": int(np.sum(active_mask)),
             "beached_particles": beached_count,
             "remaining_floating_oil_tons": round(total_oil_mass_tons, 2),
-            "centroid_lat": round(float(np.mean(lat)), 5),
-            "centroid_lon": round(float(np.mean(lon)), 5),
-            "dispersion_radius_km": round(float(np.std(lon) / deg_per_km), 2)
+            "centroid_lat": round(float(np.mean(lat[active_mask])), 5),
+            "centroid_lon": round(float(np.mean(lon[active_mask])), 5),
+            "dispersion_radius_km": round(float(np.std(lon[active_mask]) / deg_per_km), 2)
         })
 
         start_calc_time = time.time()
@@ -143,15 +141,26 @@ class CaspianLagrangianDriftEngine:
             
             # Log animation frames daily (every 8 steps at 3h increments)
             if step % 8 == 0 or step == self.num_steps:
+                active_mask = active_status
+                # Centroids and spread reflect only still-floating droplets so a
+                # forecasted slick can never appear to travel across dry land.
+                if np.any(active_mask):
+                    centroid_lat = float(np.mean(lat[active_mask]))
+                    centroid_lon = float(np.mean(lon[active_mask]))
+                    radius_km = float(np.std(lon[active_mask]) / deg_per_km)
+                else:
+                    centroid_lat = float(np.mean(lat))
+                    centroid_lon = float(np.mean(lon))
+                    radius_km = float(np.std(lon) / deg_per_km)
                 trajectory_frames.append({
                     "step": step,
                     "day": round(elapsed_days, 1),
-                    "active_floating_particles": int(np.sum(active_status)),
+                    "active_floating_particles": int(np.sum(active_mask)),
                     "beached_shoreline_particles": beached_count,
                     "remaining_floating_oil_tons": round(float(current_mass), 2),
-                    "centroid_lat": round(float(np.mean(lat[active_status])) if np.any(active_status) else float(np.mean(lat)), 5),
-                    "centroid_lon": round(float(np.mean(lon[active_status])) if np.any(active_status) else float(np.mean(lon)), 5),
-                    "dispersion_radius_km": round(float(np.std(lon) / deg_per_km), 2)
+                    "centroid_lat": round(centroid_lat, 5),
+                    "centroid_lon": round(centroid_lon, 5),
+                    "dispersion_radius_km": round(radius_km, 2)
                 })
 
         calc_duration = time.time() - start_calc_time
@@ -176,6 +185,7 @@ class CaspianLagrangianDriftEngine:
 
 if __name__ == "__main__":
     print("=== EXECUTING STEP 16: 30-DAY LAGRANGIAN DRIFT FORECAST SUITE ===")
+    np.random.seed(42)
     engine = CaspianLagrangianDriftEngine(num_particles=500, time_step_hours=3.0, total_days=30)
     
     # Simulate a 250-ton offshore petroleum leak near Baku oil field sector [40.35 N, 50.45 E]

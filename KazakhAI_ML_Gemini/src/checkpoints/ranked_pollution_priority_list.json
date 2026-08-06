@@ -1,6 +1,6 @@
 {
-  "evaluation_timestamp": "2026-08-05T19:05:00+04:00",
-  "total_incidents_evaluated": 4,
+  "evaluation_timestamp": "2026-08-06T11:51:54.249589+00:00",
+  "total_incidents_evaluated": 9,
   "ranked_pollution_list": [
     {
       "incident_id": "SPILL_2026_001_BAKU_HARBOR",
@@ -45,11 +45,116 @@
       "priority_rank": 2
     },
     {
+      "incident_id": "SPILL_2026_005_AKTAU",
+      "location_name": "Aktau Port Approaches (Kazakhstan Offshore)",
+      "coordinates": [
+        43.6,
+        51.3
+      ],
+      "priority_score": 54.06,
+      "urgency_classification": "HIGH PRIORITY - DISPATCH FAST RESPONSE SKIMMERS",
+      "factor_breakdown": {
+        "pollution_size_km2": 10.5,
+        "toxicity_index": 0.92,
+        "coastline_distance_m": 3000.0,
+        "population_density_sqkm": 900.0,
+        "protected_ecosystem_zone": false,
+        "economic_loss_usd": 650000.0,
+        "forecast_spread_km2_day": 1.8,
+        "ai_detection_confidence": 90.0
+      },
+      "priority_rank": 3
+    },
+    {
+      "incident_id": "SPILL_2026_009_ABSHERON",
+      "location_name": "Absheron Eastern Approaches (Pipeline Corridor)",
+      "coordinates": [
+        40.3,
+        50.5
+      ],
+      "priority_score": 45.6,
+      "urgency_classification": "MODERATE RISK - INITIATE HOURLY SATELLITE TRACKING",
+      "factor_breakdown": {
+        "pollution_size_km2": 7.0,
+        "toxicity_index": 0.98,
+        "coastline_distance_m": 9000.0,
+        "population_density_sqkm": 120.0,
+        "protected_ecosystem_zone": false,
+        "economic_loss_usd": 750000.0,
+        "forecast_spread_km2_day": 2.0,
+        "ai_detection_confidence": 91.0
+      },
+      "priority_rank": 4
+    },
+    {
+      "incident_id": "SPILL_2026_007_MANGYSTAU",
+      "location_name": "Mangystau Shelf (Kazakhstan Export Route)",
+      "coordinates": [
+        44.6,
+        50.6
+      ],
+      "priority_score": 43.74,
+      "urgency_classification": "MODERATE RISK - INITIATE HOURLY SATELLITE TRACKING",
+      "factor_breakdown": {
+        "pollution_size_km2": 6.5,
+        "toxicity_index": 0.95,
+        "coastline_distance_m": 6500.0,
+        "population_density_sqkm": 40.0,
+        "protected_ecosystem_zone": false,
+        "economic_loss_usd": 480000.0,
+        "forecast_spread_km2_day": 1.6,
+        "ai_detection_confidence": 89.0
+      },
+      "priority_rank": 5
+    },
+    {
+      "incident_id": "OBS_2026_008_SUMQAYIT",
+      "location_name": "Sumqayit Coastal Shelf (Combined Industrial & Algal)",
+      "coordinates": [
+        41.9,
+        49.4
+      ],
+      "priority_score": 39.83,
+      "urgency_classification": "MODERATE RISK - INITIATE HOURLY SATELLITE TRACKING",
+      "factor_breakdown": {
+        "pollution_size_km2": 14.0,
+        "toxicity_index": 0.45,
+        "coastline_distance_m": 1500.0,
+        "population_density_sqkm": 700.0,
+        "protected_ecosystem_zone": false,
+        "economic_loss_usd": 90000.0,
+        "forecast_spread_km2_day": 0.9,
+        "ai_detection_confidence": 79.0
+      },
+      "priority_rank": 6
+    },
+    {
+      "incident_id": "OBS_2026_006_TURKMENBAY",
+      "location_name": "Turkmenbashi Bay (Industrial & Effluent Runoff)",
+      "coordinates": [
+        37.55,
+        52.6
+      ],
+      "priority_score": 39.28,
+      "urgency_classification": "MODERATE RISK - INITIATE HOURLY SATELLITE TRACKING",
+      "factor_breakdown": {
+        "pollution_size_km2": 9.0,
+        "toxicity_index": 0.85,
+        "coastline_distance_m": 8000.0,
+        "population_density_sqkm": 60.0,
+        "protected_ecosystem_zone": false,
+        "economic_loss_usd": 210000.0,
+        "forecast_spread_km2_day": 1.0,
+        "ai_detection_confidence": 86.0
+      },
+      "priority_rank": 7
+    },
+    {
       "incident_id": "OBS_2026_004_VOLGA_SILT",
       "location_name": "Volga River Delta (Turbid Sediment Runoff)",
       "coordinates": [
-        46.2,
-        49.2
+        46.1,
+        49.6
       ],
       "priority_score": 37.81,
       "urgency_classification": "MODERATE RISK - INITIATE HOURLY SATELLITE TRACKING",
@@ -63,7 +168,7 @@
         "forecast_spread_km2_day": 0.4,
         "ai_detection_confidence": 82.0
       },
-      "priority_rank": 3
+      "priority_rank": 8
     },
     {
       "incident_id": "SPILL_2026_003_DEEP_CENTRAL",
@@ -84,7 +189,7 @@
         "forecast_spread_km2_day": 1.0,
         "ai_detection_confidence": 88.0
       },
-      "priority_rank": 4
+      "priority_rank": 9
     }
   ],
   "provenance": "KazakhAI_ML_Gemini 8-Factor Cleanup Priority Engine"

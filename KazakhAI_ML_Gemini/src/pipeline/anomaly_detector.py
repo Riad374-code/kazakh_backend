@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import math
 import logging
-from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 
 from src.storage.db import CaspianDatabase
@@ -23,18 +22,65 @@ from src.storage.db import CaspianDatabase
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: [%(name)s] %(message)s")
 logger = logging.getLogger("AnomalyDetector")
 
-# Stage 1 grid over the Caspian basin (lat x lon cells).
+# Stage 1 grid over the Caspian basin (lat, lon, name, seeded event_type).
+# Cells with an event_type model an active detection and become pollution
+# incidents; None cells stay clean and only contribute monitoring masks.
 WEEKS = 12  # 12 weeks of archived weekly baseline (rolling window)
 WEEK_NAMES = [f"2026-W{w:02d}" for w in range(1, WEEKS + 1)]
 
 GRID = [
-    (40.35, 50.05, "BAKU_NEARSHORE"),     # Baku harbor approaches
-    (45.10, 50.80, "SEAL_ISLANDS"),       # northern seal reserve
-    (41.80, 51.50, "CENTRAL_BASIN"),       # deep central tanker route
-    (46.20, 49.30, "VOLGA_DELTA"),         # river delta
-    (43.60, 51.26, "AKTAU_PORT"),          # Aktau approach
-    (39.00, 52.80, "TURKMEN_SHELF"),       # Turkmen coastal shelf
+    (40.35, 50.05, "BAKU_NEARSHORE", "oil_hydrocarbon"),
+    (45.10, 50.80, "SEAL_ISLANDS", "oil_hydrocarbon"),
+    (41.80, 51.50, "CENTRAL_BASIN", None),
+    (46.10, 49.60, "VOLGA_DELTA", "river_sediment"),
+    (43.60, 51.26, "AKTAU_PORT", None),
+    (39.00, 52.20, "TURKMEN_SHELF", "oil_hydrocarbon"),
+    (38.60, 49.30, "LENKORAN_BLOCK", None),
+    (44.60, 50.40, "MANGYSTAU_COAST", "oil_hydrocarbon"),
+    (41.90, 49.50, "SUMQAYIT_SHELF", "algal_bloom"),
+    (37.60, 52.70, "TURKMENBAY", None),
+    (45.60, 51.60, "ZILANTUY_BAY", None),
+    (40.30, 50.55, "ABSHERON_EAST", None),
+    (46.60, 48.30, "KIZLIAR_FLATS", "river_sediment"),
+    (43.20, 50.50, "HASAR_CENTRAL", None),
+    (43.90, 50.90, "TUPKARAGAN", "industrial_runoff"),
 ]
+
+# Per-cell overrides on top of the event-type defaults used to build incidents.
+CELL_FACTORS = {
+    "BAKU_NEARSHORE": {"coastline_distance_m": 1200.0, "affected_population_density": 2800.0},
+    "SEAL_ISLANDS": {"coastline_distance_m": 4500.0, "in_protected_ecosystem_zone": True,
+                     "biodiversity_sensitivity_index": 0.98},
+    "VOLGA_DELTA": {"coastline_distance_m": 500.0, "affected_population_density": 110.0},
+    "AKTAU_PORT": {"coastline_distance_m": 3000.0, "affected_population_density": 900.0},
+    "TURKMEN_SHELF": {"coastline_distance_m": 7000.0},
+    "LENKORAN_BLOCK": {"coastline_distance_m": 4000.0, "affected_population_density": 300.0},
+    "MANGYSTAU_COAST": {"coastline_distance_m": 6500.0},
+    "SUMQAYIT_SHELF": {"coastline_distance_m": 1500.0, "affected_population_density": 700.0},
+    "TURKMENBAY": {"coastline_distance_m": 8000.0},
+    "ZILANTUY_BAY": {"coastline_distance_m": 2000.0, "affected_population_density": 50.0},
+    "ABSHERON_EAST": {"coastline_distance_m": 9000.0},
+    "KIZLIAR_FLATS": {"coastline_distance_m": 1000.0, "affected_population_density": 80.0},
+    "HASAR_CENTRAL": {"coastline_distance_m": 40000.0, "affected_population_density": 5.0},
+    "TUPKARAGAN": {"coastline_distance_m": 5500.0, "affected_population_density": 120.0},
+    "CENTRAL_BASIN": {"coastline_distance_m": 85000.0},
+}
+
+# Event-type defaults merged with the per-cell overrides when building incidents.
+EVENT_FACTORS = {
+    "oil_hydrocarbon": {"pollution_size_km2": 8.0, "toxicity_score": 1.0,
+                        "economic_impact_estimate_usd": 900000.0,
+                        "forecast_spread_rate_km2_day": 2.2, "detection_confidence": 0.93},
+    "river_sediment": {"pollution_size_km2": 28.0, "toxicity_score": 0.15,
+                       "economic_impact_estimate_usd": 8000.0,
+                       "forecast_spread_rate_km2_day": 0.4, "detection_confidence": 0.82},
+    "algal_bloom": {"pollution_size_km2": 15.0, "toxicity_score": 0.05,
+                    "economic_impact_estimate_usd": 5000.0,
+                    "forecast_spread_rate_km2_day": 0.6, "detection_confidence": 0.78},
+    "industrial_runoff": {"pollution_size_km2": 5.0, "toxicity_score": 0.8,
+                          "economic_impact_estimate_usd": 250000.0,
+                          "forecast_spread_rate_km2_day": 1.1, "detection_confidence": 0.85},
+}
 
 
 def _sim_series(base: float, amp: float, seed: float, drift: float = 0.0,
@@ -152,9 +198,8 @@ class WeeklyAnomalyDetector:
     def recompute_weeks(self, weeks_back: int = 4) -> List[Dict[str, Any]]:
         """Recomputes and persists the most recent anomaly masks for the grid."""
         rows = []
-        # Seed a known recent event at the Baku nearshore cell for a demonstrable detection.
-        for lat, lon, name in GRID:
-            event = "oil_hydrocarbon" if name == "BAKU_NEARSHORE" else None
+        # Cells with a seeded event produce a demonstrable detection at the latest week.
+        for lat, lon, name, event in GRID:
             for w in range(WEEKS - weeks_back, WEEKS):
                 rec = self.detect_week(w, lat, lon, event_type=event if w == WEEKS - 1 else None)
                 self.db.insert_anomaly(rec)
@@ -162,3 +207,32 @@ class WeeklyAnomalyDetector:
         self.db.commit()
         logger.info(f"Recomputed {len(rows)} weekly anomaly masks across the grid.")
         return rows
+
+    def grid_incidents(self) -> List[Dict[str, Any]]:
+        """
+        Derives pollution incident drafts from the grid cells that show an active
+        detection at the latest week (i.e. seeded event type). Each draft carries
+        the 8 priority-engine factors plus the detection confidence from the mask.
+
+        Returns raw incident factor dicts; the priority engine / bootstrap layer
+        computes the weighted scores and persists them to the operational store.
+        """
+        incidents: List[Dict[str, Any]] = []
+        for idx, (lat, lon, name, event) in enumerate(GRID, start=1):
+            if not event:
+                continue
+            rec = self.detect_week(WEEKS - 1, lat, lon, event_type=event)
+            factors = dict(EVENT_FACTORS[event])
+            factors.update(CELL_FACTORS.get(name, {}))
+            factors["detection_confidence"] = min(0.99, max(0.6, rec.get("confidence", 0.9)))
+            location = name.replace("_", " ").title()
+            incidents.append({
+                "incident_id": f"DET_2026_{idx:03d}_{name}",
+                "location_name": f"{location} (Satellite Detection)",
+                "coordinates": [lat, lon],
+                "pollution_type": event,
+                "status": "active",
+                **factors,
+            })
+        logger.info(f"Derived {len(incidents)} pollution incidents from the Stage 1 grid.")
+        return incidents

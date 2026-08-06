@@ -8,13 +8,15 @@ SQLite. Safe to call on every server startup or via the /admin/refresh endpoint.
 from __future__ import annotations
 
 import logging
-from typing import Dict, Any
+from datetime import datetime, timezone
+from typing import Dict, Any, Optional
 
 from src.storage.db import CaspianDatabase, seed_from_checkpoints
 from src.infrastructure.assets import build_asset_catalog
 from src.pipeline.oil_gas_risk import OilGasRiskEngine
 from src.pipeline.energy_impact import EnergyImpactEngine
 from src.pipeline.trend_analysis import TrendAnalysisEngine
+from src.pipeline.priority_engine import CaspianPriorityEngine
 from src.pipeline.anomaly_detector import WeeklyAnomalyDetector
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: [%(name)s] %(message)s")
@@ -51,6 +53,17 @@ def run_full_refresh(db: Optional[CaspianDatabase] = None) -> Dict[str, Any]:
     anomaly_engine = WeeklyAnomalyDetector(db)
     anomaly_count = len(anomaly_engine.recompute_weeks())
 
+    # 7. Derive live pollution incidents from the anomaly grid so the incident
+    #    list grows automatically as detections are made (not just the static
+    #    checkpoint seed). Idempotent per incident_id.
+    priority = CaspianPriorityEngine()
+    now = datetime.now(timezone.utc).isoformat()
+    incident_count = 0
+    for draft in anomaly_engine.grid_incidents():
+        db.upsert_incident(_incident_from_scored(priority.compute_incident_priority(draft), draft, now))
+        incident_count += 1
+    db.commit()
+
     stats = db.stats()
 
     logger.info(
@@ -68,6 +81,33 @@ def run_full_refresh(db: Optional[CaspianDatabase] = None) -> Dict[str, Any]:
             "projections": trend_result["future_exposure"],
         },
         "anomaly_masks_computed": anomaly_count,
+        "incidents_derived_from_grid": incident_count,
+    }
+
+
+def _incident_from_scored(scored: Dict[str, Any], draft: Dict[str, Any], now: str) -> Dict[str, Any]:
+    """Maps a priority-engine scored incident back onto the SQLite incidents schema."""
+    b = scored.get("factor_breakdown", {})
+    coords = scored.get("coordinates", [0.0, 0.0])
+    return {
+        "incident_id": scored.get("incident_id"),
+        "location_name": scored.get("location_name"),
+        "coordinates_lat": coords[0] if isinstance(coords, list) and len(coords) > 0 else None,
+        "coordinates_lon": coords[1] if isinstance(coords, list) and len(coords) > 1 else None,
+        "pollution_type": draft.get("pollution_type"),
+        "size_km2": b.get("pollution_size_km2"),
+        "toxicity_score": b.get("toxicity_index"),
+        "detection_confidence": None if b.get("ai_detection_confidence") is None
+        else round(float(b.get("ai_detection_confidence", 0)) / 100.0, 4),
+        "priority_score": scored.get("priority_score"),
+        "urgency_classification": scored.get("urgency_classification"),
+        "coastline_distance_m": b.get("coastline_distance_m"),
+        "population_density_sqkm": b.get("population_density_sqkm"),
+        "in_protected_ecosystem_zone": int(bool(b.get("protected_ecosystem_zone"))),
+        "economic_impact_estimate_usd": b.get("economic_loss_usd"),
+        "forecast_spread_rate_km2_day": b.get("forecast_spread_km2_day"),
+        "status": draft.get("status", "active"),
+        "detected_at": now,
     }
 
 

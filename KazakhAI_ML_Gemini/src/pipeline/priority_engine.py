@@ -4,12 +4,12 @@ Computes rigorous marine cleanup priority scores by integrating 8 fundamental en
 returning a definitively ranked pollution emergency response list.
 """
 
-import os
 import math
 import json
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: [%(name)s] %(message)s")
 logger = logging.getLogger("PriorityEngine")
@@ -132,7 +132,7 @@ class CaspianPriorityEngine:
             item["priority_rank"] = i
 
         report = {
-            "evaluation_timestamp": "2026-08-05T19:05:00+04:00",
+            "evaluation_timestamp": datetime.now(timezone.utc).isoformat(),
             "total_incidents_evaluated": len(ranked_list),
             "ranked_pollution_list": ranked_list,
             "provenance": "KazakhAI_ML_Gemini 8-Factor Cleanup Priority Engine"
@@ -149,7 +149,7 @@ if __name__ == "__main__":
     print("=== EXECUTING STEP 17: 8-FACTOR POLLUTION CLEANUP PRIORITY ENGINE ===")
     engine = CaspianPriorityEngine()
     
-    # Simulate 4 real-world Caspian Sea environmental scenarios to test priority sorting logic:
+    # Simulate real-world Caspian Sea environmental scenarios to test priority sorting logic:
     incidents_to_evaluate = [
         {
             "incident_id": "SPILL_2026_001_BAKU_HARBOR",
@@ -194,7 +194,7 @@ if __name__ == "__main__":
         {
             "incident_id": "OBS_2026_004_VOLGA_SILT",
             "location_name": "Volga River Delta (Turbid Sediment Runoff)",
-            "coordinates": [46.20, 49.20],
+            "coordinates": [46.10, 49.60],
             "pollution_size_km2": 32.0,            # Huge geographic surface area
             "toxicity_score": 0.15,                # Extremely low toxicity (harmless mud & silt)
             "coastline_distance_m": 500.0,
@@ -203,6 +203,71 @@ if __name__ == "__main__":
             "economic_impact_estimate_usd": 5000.0,
             "forecast_spread_rate_km2_day": 0.4,
             "detection_confidence": 0.82           # Flagged as non-hydrocarbon by Step 15
+        },
+        {
+            "incident_id": "SPILL_2026_005_AKTAU",
+            "location_name": "Aktau Port Approaches (Kazakhstan Offshore)",
+            "coordinates": [43.60, 51.30],
+            "pollution_size_km2": 10.5,
+            "toxicity_score": 0.92,
+            "coastline_distance_m": 3000.0,
+            "affected_population_density": 900.0,
+            "in_protected_ecosystem_zone": False,
+            "economic_impact_estimate_usd": 650000.0,
+            "forecast_spread_rate_km2_day": 1.8,
+            "detection_confidence": 0.90
+        },
+        {
+            "incident_id": "OBS_2026_006_TURKMENBAY",
+            "location_name": "Turkmenbashi Bay (Industrial & Effluent Runoff)",
+            "coordinates": [37.55, 52.60],
+            "pollution_size_km2": 9.0,
+            "toxicity_score": 0.85,
+            "coastline_distance_m": 8000.0,
+            "affected_population_density": 60.0,
+            "in_protected_ecosystem_zone": False,
+            "economic_impact_estimate_usd": 210000.0,
+            "forecast_spread_rate_km2_day": 1.0,
+            "detection_confidence": 0.86
+        },
+        {
+            "incident_id": "SPILL_2026_007_MANGYSTAU",
+            "location_name": "Mangystau Shelf (Kazakhstan Export Route)",
+            "coordinates": [44.60, 50.60],
+            "pollution_size_km2": 6.5,
+            "toxicity_score": 0.95,
+            "coastline_distance_m": 6500.0,
+            "affected_population_density": 40.0,
+            "in_protected_ecosystem_zone": False,
+            "economic_impact_estimate_usd": 480000.0,
+            "forecast_spread_rate_km2_day": 1.6,
+            "detection_confidence": 0.89
+        },
+        {
+            "incident_id": "OBS_2026_008_SUMQAYIT",
+            "location_name": "Sumqayit Coastal Shelf (Combined Industrial & Algal)",
+            "coordinates": [41.90, 49.40],
+            "pollution_size_km2": 14.0,
+            "toxicity_score": 0.45,
+            "coastline_distance_m": 1500.0,
+            "affected_population_density": 700.0,
+            "in_protected_ecosystem_zone": False,
+            "economic_impact_estimate_usd": 90000.0,
+            "forecast_spread_rate_km2_day": 0.9,
+            "detection_confidence": 0.79
+        },
+        {
+            "incident_id": "SPILL_2026_009_ABSHERON",
+            "location_name": "Absheron Eastern Approaches (Pipeline Corridor)",
+            "coordinates": [40.30, 50.50],
+            "pollution_size_km2": 7.0,
+            "toxicity_score": 0.98,
+            "coastline_distance_m": 9000.0,
+            "affected_population_density": 120.0,
+            "in_protected_ecosystem_zone": False,
+            "economic_impact_estimate_usd": 750000.0,
+            "forecast_spread_rate_km2_day": 2.0,
+            "detection_confidence": 0.91
         }
     ]
     
