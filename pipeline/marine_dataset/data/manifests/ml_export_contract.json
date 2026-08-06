@@ -1,21 +1,29 @@
 {
   "channel_axis_order": "CHW",
-  "channels": [],
+  "channels": [
+    "B02",
+    "B03",
+    "B04"
+  ],
   "dtype": "float32",
   "feature_availability": {
-    "optional_features": [],
+    "optional_features": [
+      "weather"
+    ],
     "representation": "per_sample_boolean_map",
-    "required_features": []
+    "required_features": [
+      "label"
+    ]
   },
   "nodata": {
     "representation": "mask",
     "value": null
   },
   "normalization": {
-    "fit_scope": "training_split_only",
-    "method": null,
+    "fit_scope": "global_per_sample",
+    "method": "minmax_to_0_1",
     "parameters": {},
-    "status": "not_run"
+    "status": "applied_on_load"
   },
   "schema_version": "1.0",
   "split": {
@@ -25,15 +33,22 @@
       "test"
     ],
     "source": "split_manifest.parquet",
-    "status": "not_run"
+    "status": "done"
   },
-  "status": "not_configured",
+  "status": "configured",
   "target": {
     "field": "class_id",
+    "positive_classes": [
+      2
+    ],
     "source": "labels.parquet",
-    "status": "not_configured"
+    "status": "configured"
   },
-  "units": {},
+  "units": {
+    "B02": "reflectance",
+    "B03": "reflectance",
+    "B04": "reflectance"
+  },
   "weights": {
     "field": null,
     "source": null,

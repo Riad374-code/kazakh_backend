@@ -1,5 +1,6 @@
 {
   "status": "complete",
+  "dataset_version": "0.1.0",
   "implemented_steps": [
     1,
     2,
@@ -10,9 +11,7 @@
     7,
     8,
     9,
-    10
-  ],
-  "blocked_steps": [
+    10,
     11,
     12,
     13,
@@ -27,6 +26,14 @@
     22,
     23,
     24
+  ],
+  "blocked_steps": [],
+  "real_scenes": 20,
+  "real_tiles": 20,
+  "total_data_bytes": 271086,
+  "sources": [
+    "copernicus-dataspace-stac",
+    "open-meteo-era5"
   ],
   "artifacts": {
     "status": "pass",
@@ -49,7 +56,6 @@
       "split_manifest.parquet",
       "tiles.parquet",
       "vessels.parquet"
-    ],
-    "bytes": 59369
+    ]
   }
 }

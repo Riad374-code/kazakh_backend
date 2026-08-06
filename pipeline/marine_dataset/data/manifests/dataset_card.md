@@ -1,5 +1,7 @@
-# Marine dataset
+# Dataset Card
 
 Version: `0.1.0`
 
-SAR dark regions are not automatically oil. Predictions and weak labels require human review.
+Samples indexed: 20.
+
+Status: partial Step 09 build; split and full quality checks not run.

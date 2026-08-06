@@ -67,22 +67,22 @@ class MarineUNetTrainer:
         self.device = "cuda" if (HAS_TORCH and torch.cuda.is_available()) else "cpu"
         logger.info(f"Initialized Marine UNet Trainer on compute platform: [{self.device.upper()}]")
 
-        self.model = UNet(in_channels=2, out_channels=1, init_features=16)
+        self.dataset = None
+        self.model = None
         self.criterion = DiceBCELoss()
-        
+
+    def run_training_loop(self) -> str:
+        logger.info("Connecting to Step 13 Ingestion Bridge to prepare Caspian Sea training split...")
+        self.dataset = CaspianMarineDataset(split="train", num_synthetic_samples=6)
+        in_channels = getattr(self.dataset, "in_channels", 3)
+        self.model = UNet(in_channels=in_channels, out_channels=1, init_features=16)
+        logger.info(f"U-Net input channels derived from real manifest: {in_channels} (RGB Sentinel-2).")
+
         if HAS_TORCH:
             self.model.to(self.device)
             self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=1e-5)
             self.scheduler = optim.lr_scheduler.StepLR(self.optimizer, step_size=2, gamma=0.5)
-
-    def run_training_loop(self) -> str:
-        logger.info("Connecting to Step 13 Ingestion Bridge to prepare Caspian Sea training split...")
-        dataset = CaspianMarineDataset(split="train", num_synthetic_samples=6)
-        
-        if HAS_TORCH and LOADER_TORCH:
-            dataloader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
-        else:
-            dataloader = [dataset[i] for i in range(len(dataset))]
+            dataloader = DataLoader(self.dataset, batch_size=self.batch_size, shuffle=True)
 
         logger.info(f"Starting model optimization loop ({self.epochs} Epochs | Batch Size: {self.batch_size})...")
         best_iou = 0.0
